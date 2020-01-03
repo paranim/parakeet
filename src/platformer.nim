@@ -1,9 +1,73 @@
 import nimgl/[glfw, opengl]
+import stb_image/read as stbi
+import sequtils
+
+proc toString(str: seq[char]): string =
+  result = newStringOfCap(len(str))
+  for ch in str:
+    add(result, ch)
 
 proc keyProc(window: GLFWWindow, key: int32, scancode: int32,
              action: int32, mods: int32): void {.cdecl.} =
   if key == GLFWKey.ESCAPE and action == GLFWPress:
     window.setWindowShouldClose(true)
+
+type
+  Game = object
+    texCount: Natural
+
+const imageVertexShader =
+  """
+  #version 410
+  uniform mat3 u_matrix;
+  uniform mat3 u_texture_matrix;
+  in vec2 a_position;
+  out vec2 v_tex_coord;
+  void main()
+  {
+    gl_Position = (vec4(((u_matrix * (vec3(a_position, 1))).xy), 0, 1));
+    v_tex_coord = ((u_texture_matrix * (vec3(a_position, 1))).xy);
+  }
+  """
+
+const imageFragmentShader =
+  """
+  #version 410
+  precision mediump float;
+  uniform sampler2D u_image;
+  in vec2 v_tex_coord;
+  out vec4 o_color;
+  void main()
+  {
+    o_color = (texture(u_image, v_tex_coord));
+  }
+  """
+
+const rect =
+  [0, 0,
+   1, 0,
+   0, 1,
+   0, 1,
+   1, 0,
+   1, 1]
+
+proc checkShaderStatus(shader: GLuint) =
+  var params: GLint
+  glGetShaderiv(shader, GL_COMPILE_STATUS, params.addr);
+  if params != GL_TRUE.ord:
+    var
+      length: GLsizei
+      message = newSeq[char](1024)
+    glGetShaderInfoLog(shader, 1024, length.addr, message[0].addr)
+    raise newException(Exception, toString(message))
+
+proc createShader(shaderType: GLenum, source: string) : GLuint =
+  var shader = glCreateShader(shaderType)
+  var sourceC = cstring(source)
+  glShaderSource(shader, 1'i32, sourceC.addr, nil)
+  glCompileShader(shader)
+  checkShaderStatus(shader)
+  shader
 
 proc main() =
   assert glfwInit()
@@ -22,6 +86,16 @@ proc main() =
   w.makeContextCurrent()
 
   assert glInit()
+
+  let game = Game(texCount: 0)
+  echo createShader(GL_VERTEX_SHADER, imageVertexShader)
+
+  var
+    width, height, channels: int
+    data: seq[uint8]
+
+  data = stbi.load("resources/player_walk1.png", width, height, channels, stbi.Default)
+  echo width, " ", height
 
   while not w.windowShouldClose:
     glfwPollEvents()

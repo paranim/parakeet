@@ -13,3 +13,4 @@ bin           = @["platformer"]
 
 requires "nim >= 1.0.4"
 requires "nimgl >= 1.0.0"
+requires "stb_image >= 2.5"
