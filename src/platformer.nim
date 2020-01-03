@@ -2,6 +2,8 @@ import nimgl/[glfw, opengl]
 import stb_image/read as stbi
 import sequtils
 
+converter toSeqUint8(s: string): seq[uint8] = cast[seq[uint8]](s)
+
 proc toString(str: seq[char]): string =
   result = newStringOfCap(len(str))
   for ch in str:
@@ -42,6 +44,10 @@ const imageFragmentShader =
     o_color = (texture(u_image, v_tex_coord));
   }
   """
+
+const playerWalk1 = staticRead("assets/player_walk1.png")
+const playerWalk2 = staticRead("assets/player_walk2.png")
+const playerWalk3 = staticRead("assets/player_walk3.png")
 
 const rect =
   [0, 0,
@@ -94,7 +100,7 @@ proc main() =
     width, height, channels: int
     data: seq[uint8]
 
-  data = stbi.load("resources/player_walk1.png", width, height, channels, stbi.Default)
+  data = stbi.loadFromMemory(playerWalk1, width, height, channels, stbi.Default)
   echo width, " ", height
 
   while not w.windowShouldClose:
