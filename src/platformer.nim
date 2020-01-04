@@ -68,12 +68,30 @@ proc checkShaderStatus(shader: GLuint) =
     raise newException(Exception, toString(message))
 
 proc createShader(shaderType: GLenum, source: string) : GLuint =
-  var shader = glCreateShader(shaderType)
+  result = glCreateShader(shaderType)
   var sourceC = cstring(source)
-  glShaderSource(shader, 1'i32, sourceC.addr, nil)
-  glCompileShader(shader)
-  checkShaderStatus(shader)
-  shader
+  glShaderSource(result, 1'i32, sourceC.addr, nil)
+  glCompileShader(result)
+  checkShaderStatus(result)
+
+proc checkProgramStatus(program: GLuint) =
+  var params: GLint
+  glGetProgramiv(program, GL_LINK_STATUS, params.addr);
+  if params != GL_TRUE.ord:
+    var
+      length: GLsizei
+      message = newSeq[char](1024)
+    glGetProgramInfoLog(program, 1024, length.addr, message[0].addr)
+    raise newException(Exception, toString(message))
+
+proc createProgram(vSource: string, fSource: string) : GLuint =
+  var vShader = createShader(GL_VERTEX_SHADER, vSource)
+  var fShader = createShader(GL_FRAGMENT_SHADER, fSource)
+  result = glCreateProgram()
+  glAttachShader(result, vShader)
+  glAttachShader(result, fShader)
+  glLinkProgram(result)
+  checkProgramStatus(result)
 
 proc main() =
   assert glfwInit()
@@ -94,7 +112,9 @@ proc main() =
   assert glInit()
 
   let game = Game(texCount: 0)
-  echo createShader(GL_VERTEX_SHADER, imageVertexShader)
+
+  let program = createProgram(imageVertexShader, imageFragmentShader)
+  echo program
 
   var
     width, height, channels: int
