@@ -211,6 +211,8 @@ proc main() =
 
   glEnable(GL_BLEND)
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+  glDisable(GL_CULL_FACE)
+  glDisable(GL_DEPTH_TEST)
 
   let game = Game(texCount: 0)
 
@@ -227,9 +229,10 @@ proc main() =
   let matrixUni = glGetUniformLocation(program, "u_matrix")
   var matrix =
     (scalingMatrix(50f, 50f) *
-     (translationMatrix(0f, 0f) *
-      (projectionMatrix(800f, 600f) *
-       identityMatrix())))
+     translationMatrix(50f, 50f) *
+     projectionMatrix(800f, 600f) *
+     identityMatrix())
+    .transpose()
   glUniformMatrix3fv(matrixUni, 1, false, matrix.caddr)
 
   let colorUni = glGetUniformLocation(program, "u_color")
@@ -280,9 +283,9 @@ proc main() =
 ]#
 
   while not w.windowShouldClose:
-    glViewport(0, 0, 800, 600)
     glClearColor(173/255, 216/255, 230/255, 1f)
     glClear(GL_COLOR_BUFFER_BIT)
+    glViewport(0, 0, 800, 600)
 
     #glUniform1i(imageUni, unit)
     glDrawArrays(GL_TRIANGLES, 0, drawCount)
