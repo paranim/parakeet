@@ -128,11 +128,10 @@ proc setArrayBuffer(program: GLuint, buffer: GLuint, attribName: string, attr: A
   var previousBuffer: GLint
   glGetIntegerv(GL_ARRAY_BUFFER_BINDING, previousBuffer.addr)
   glBindBuffer(GL_ARRAY_BUFFER, buffer)
-  var firstItem = attr.data[0]
-  glBufferData(GL_ARRAY_BUFFER, cint(cfloat.sizeof * attr.data.len), firstItem.addr, GL_STATIC_DRAW)
+  glBufferData(GL_ARRAY_BUFFER, cint(cfloat.sizeof * attr.data.len), attr.data[0].unsafeAddr, GL_STATIC_DRAW)
   glEnableVertexAttribArray(attribLocation)
   glVertexAttribPointer(attribLocation, attr.size, EGL_FLOAT, false, GLsizei(cfloat.sizeof * attr.size), nil)
-  glBindBuffer(GL_ARRAY_BUFFER, GLuint(previousBuffer))
+  #glBindBuffer(GL_ARRAY_BUFFER, GLuint(previousBuffer))
 
 type
   Opts = object
@@ -154,19 +153,18 @@ proc createTexture(game: Game, uniLoc: GLint, data: seq[uint8], opts: Opts, para
   for (paramName, paramVal) in params:
     glTexParameteri(GL_TEXTURE_2D, paramName, GLint(paramVal))
   # TODO: alignment
-  var firstItem = data[0]
-  glTexImage2D(GL_TEXTURE_2D, opts.mipLevel, GLint(opts.internalFmt), opts.width, opts.height, opts.border, opts.srcFmt, opts.srcType, firstItem.addr)
+  glTexImage2D(GL_TEXTURE_2D, opts.mipLevel, GLint(opts.internalFmt), opts.width, opts.height, opts.border, opts.srcFmt, opts.srcType, data[0].unsafeAddr)
   # TODO: mipmap
   GLint(unit)
 
-proc identityMatrix(): Mat3x3[float32] =
+proc identityMatrix(): Mat3x3[cfloat] =
   mat3x3(
     vec3(1f, 0f, 0f),
     vec3(0f, 1f, 0f),
     vec3(0f, 0f, 1f)
   )
 
-proc projectionMatrix(width: float32, height: float32): Mat3x3[float32] =
+proc projectionMatrix(width: cfloat, height: cfloat): Mat3x3[cfloat] =
   mat3x3(
     #vec3(2f / width, 0f, 0f),
     #vec3(0f, -2f / height, 0f),
@@ -176,7 +174,7 @@ proc projectionMatrix(width: float32, height: float32): Mat3x3[float32] =
     vec3(0f, 0f, 1f)
   )
 
-proc translationMatrix(x: float32, y: float32): Mat3x3[float32] =
+proc translationMatrix(x: cfloat, y: cfloat): Mat3x3[cfloat] =
   mat3x3(
     #vec3(1f, 0f, 0f),
     #vec3(0f, 1f, 0f),
@@ -186,7 +184,7 @@ proc translationMatrix(x: float32, y: float32): Mat3x3[float32] =
     vec3(0f, 0f, 1f)
   )
 
-proc scalingMatrix(x: float32, y: float32): Mat3x3[float32] =
+proc scalingMatrix(x: cfloat, y: cfloat): Mat3x3[cfloat] =
   mat3x3(
     vec3(x, 0f, 0f),
     vec3(0f, y, 0f),
@@ -211,6 +209,9 @@ proc main() =
 
   assert glInit()
 
+  glEnable(GL_BLEND)
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+
   let game = Game(texCount: 0)
 
   let program = createProgram(twoDVertexShader, twoDFragmentShader)
@@ -223,17 +224,17 @@ proc main() =
   glGenBuffers(1, positionBuf.addr)
   let drawCount = setArrayBuffer(program, positionBuf, "a_position", Attribute(data: rect, size: 2))
 
-  var matrixUni = glGetUniformLocation(program, "u_matrix")
+  let matrixUni = glGetUniformLocation(program, "u_matrix")
   var matrix =
     (scalingMatrix(50f, 50f) *
-     (translationMatrix(50f, 50f) *
+     (translationMatrix(0f, 0f) *
       (projectionMatrix(800f, 600f) *
        identityMatrix())))
   glUniformMatrix3fv(matrixUni, 1, false, matrix.caddr)
 
-  var colorUni = glGetUniformLocation(program, "u_color")
-  var color = vec4(0.5f, 0.5f, 0.5f, 1)
-  glUniform3fv(colorUni, 1, color.caddr)
+  let colorUni = glGetUniformLocation(program, "u_color")
+  var color = vec4(1f, 0f, 0f, 1)
+  glUniform4fv(colorUni, 1, color.caddr)
 
 #[
   var
@@ -268,7 +269,7 @@ proc main() =
     identityMatrix() *
     projectionMatrix(800f, 600f) *
     translationMatrix(0f, 0f) *
-    scalingMatrix(float32(width), float32(height))
+    scalingMatrix(cfloat(width), cfloat(height))
   var matrix2 = mat3(
     vec3(7f / 40f, 0f, -1f),
     vec3(0f, -1f / 3f, 1f),
