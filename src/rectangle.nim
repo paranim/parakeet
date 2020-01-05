@@ -1,6 +1,6 @@
 import nimgl/[glfw, opengl]
 import glm
-import utils, math
+import parabola/utils, parabola/math
 
 proc keyProc(window: GLFWWindow, key: int32, scancode: int32,
              action: int32, mods: int32): void {.cdecl.} =

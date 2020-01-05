@@ -1,7 +1,7 @@
 import nimgl/[glfw, opengl]
 import stb_image/read as stbi
 import glm
-import utils, math
+import parabola/utils, parabola/math
 
 converter toSeqUint8(s: string): seq[uint8] = cast[seq[uint8]](s)
 
