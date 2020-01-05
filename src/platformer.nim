@@ -1,6 +1,7 @@
 import nimgl/[glfw, opengl]
 import stb_image/read as stbi
 import sequtils
+import glm
 
 converter toSeqUint8(s: string): seq[uint8] = cast[seq[uint8]](s)
 
@@ -15,8 +16,31 @@ proc keyProc(window: GLFWWindow, key: int32, scancode: int32,
     window.setWindowShouldClose(true)
 
 type
-  Game = object
+  Game = ref object
     texCount: Natural
+
+const twoDVertexShader =
+  """
+  #version 410
+  uniform mat3 u_matrix;
+  in vec2 a_position;
+  void main()
+  {
+    gl_Position = (vec4(((u_matrix * (vec3(a_position, 1))).xy), 0, 1));
+  }
+  """
+
+const twoDFragmentShader =
+  """
+  #version 410
+  precision mediump float;
+  uniform vec4 u_color;
+  out vec4 o_color;
+  void main()
+  {
+    o_color = u_color;
+  }
+  """
 
 const imageVertexShader =
   """
@@ -50,12 +74,12 @@ const playerWalk2 = staticRead("assets/player_walk2.png")
 const playerWalk3 = staticRead("assets/player_walk3.png")
 
 const rect =
-  [0, 0,
-   1, 0,
-   0, 1,
-   0, 1,
-   1, 0,
-   1, 1]
+  @[0f, 0f,
+    1f, 0f,
+    0f, 1f,
+    0f, 1f,
+    1f, 0f,
+    1f, 1f]
 
 proc checkShaderStatus(shader: GLuint) =
   var params: GLint
@@ -93,11 +117,87 @@ proc createProgram(vSource: string, fSource: string) : GLuint =
   glLinkProgram(result)
   checkProgramStatus(result)
 
+type
+  Attribute = object
+    data: seq[cfloat]
+    size: GLint
+
+proc setArrayBuffer(program: GLuint, buffer: GLuint, attribName: string, attr: Attribute): GLsizei =
+  result = GLsizei(attr.data.len / attr.size)
+  var attribLocation = GLuint(glGetAttribLocation(program, cstring(attribName)))
+  var previousBuffer: GLint
+  glGetIntegerv(GL_ARRAY_BUFFER_BINDING, previousBuffer.addr)
+  glBindBuffer(GL_ARRAY_BUFFER, buffer)
+  var firstItem = attr.data[0]
+  glBufferData(GL_ARRAY_BUFFER, cint(cfloat.sizeof * attr.data.len), firstItem.addr, GL_STATIC_DRAW)
+  glEnableVertexAttribArray(attribLocation)
+  glVertexAttribPointer(attribLocation, attr.size, EGL_FLOAT, false, GLsizei(cfloat.sizeof * attr.size), nil)
+  glBindBuffer(GL_ARRAY_BUFFER, GLuint(previousBuffer))
+
+type
+  Opts = object
+    mipLevel: GLint
+    internalFmt: GLenum
+    width: GLsizei
+    height: GLsizei
+    border: GLint
+    srcFmt: GLenum
+    srcType: GLenum
+
+proc createTexture(game: Game, uniLoc: GLint, data: seq[uint8], opts: Opts, params: seq[(GLenum, GLenum)]): GLint =
+  game.texCount += 1
+  let unit = game.texCount - 1
+  var texture: GLuint
+  glGenTextures(1, texture.addr)
+  glActiveTexture(GLenum(GL_TEXTURE0.ord + unit))
+  glBindTexture(GL_TEXTURE_2D, texture)
+  for (paramName, paramVal) in params:
+    glTexParameteri(GL_TEXTURE_2D, paramName, GLint(paramVal))
+  # TODO: alignment
+  var firstItem = data[0]
+  glTexImage2D(GL_TEXTURE_2D, opts.mipLevel, GLint(opts.internalFmt), opts.width, opts.height, opts.border, opts.srcFmt, opts.srcType, firstItem.addr)
+  # TODO: mipmap
+  GLint(unit)
+
+proc identityMatrix(): Mat3x3[float32] =
+  mat3x3(
+    vec3(1f, 0f, 0f),
+    vec3(0f, 1f, 0f),
+    vec3(0f, 0f, 1f)
+  )
+
+proc projectionMatrix(width: float32, height: float32): Mat3x3[float32] =
+  mat3x3(
+    #vec3(2f / width, 0f, 0f),
+    #vec3(0f, -2f / height, 0f),
+    #vec3(-1f, 1f, 1f)
+    vec3(2f / width, 0f, -1f),
+    vec3(0f, -2f / height, 1f),
+    vec3(0f, 0f, 1f)
+  )
+
+proc translationMatrix(x: float32, y: float32): Mat3x3[float32] =
+  mat3x3(
+    #vec3(1f, 0f, 0f),
+    #vec3(0f, 1f, 0f),
+    #vec3(x, y, 1f)
+    vec3(1f, 0f, x),
+    vec3(0f, 1f, y),
+    vec3(0f, 0f, 1f)
+  )
+
+proc scalingMatrix(x: float32, y: float32): Mat3x3[float32] =
+  mat3x3(
+    vec3(x, 0f, 0f),
+    vec3(0f, y, 0f),
+    vec3(0f, 0f, 1f)
+  )
+
 proc main() =
   assert glfwInit()
 
-  glfwWindowHint(GLFWContextVersionMajor, 3)
-  glfwWindowHint(GLFWContextVersionMinor, 3)
+  glfwWindowHint(GLFWContextVersionMajor, 4)
+  glfwWindowHint(GLFWContextVersionMinor, 1)
   glfwWindowHint(GLFWOpenglForwardCompat, GLFW_TRUE) # Used for Mac
   glfwWindowHint(GLFWOpenglProfile, GLFW_OPENGL_CORE_PROFILE)
   glfwWindowHint(GLFWResizable, GLFW_TRUE)
@@ -113,21 +213,81 @@ proc main() =
 
   let game = Game(texCount: 0)
 
-  let program = createProgram(imageVertexShader, imageFragmentShader)
-  echo program
+  let program = createProgram(twoDVertexShader, twoDFragmentShader)
+  glUseProgram(program)
+  var vao: GLuint
+  glGenVertexArrays(1, vao.addr)
+  glBindVertexArray(vao)
 
+  var positionBuf: GLuint
+  glGenBuffers(1, positionBuf.addr)
+  let drawCount = setArrayBuffer(program, positionBuf, "a_position", Attribute(data: rect, size: 2))
+
+  var matrixUni = glGetUniformLocation(program, "u_matrix")
+  var matrix =
+    (scalingMatrix(50f, 50f) *
+     (translationMatrix(50f, 50f) *
+      (projectionMatrix(800f, 600f) *
+       identityMatrix())))
+  glUniformMatrix3fv(matrixUni, 1, false, matrix.caddr)
+
+  var colorUni = glGetUniformLocation(program, "u_color")
+  var color = vec4(0.5f, 0.5f, 0.5f, 1)
+  glUniform3fv(colorUni, 1, color.caddr)
+
+#[
   var
     width, height, channels: int
     data: seq[uint8]
-
   data = stbi.loadFromMemory(playerWalk1, width, height, channels, stbi.Default)
-  echo width, " ", height
+
+  var imageUni = glGetUniformLocation(program, "u_image")
+  let opts = Opts(
+    mipLevel: 0,
+    internalFmt: GL_RGBA,
+    width: GLsizei(width),
+    height: GLsizei(height),
+    border: 0,
+    srcFmt: GL_RGBA,
+    srcType: GL_UNSIGNED_BYTE
+  )
+  let params = @[
+    (GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE),
+    (GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE),
+    (GL_TEXTURE_MIN_FILTER, GL_NEAREST),
+    (GL_TEXTURE_MAG_FILTER, GL_NEAREST)
+  ]
+  let unit = createTexture(game, imageUni, data, opts, params)
+
+  var textureMatrixUni = glGetUniformLocation(program, "u_texture_matrix")
+  var textureMatrix = identityMatrix()
+  glUniformMatrix3fv(textureMatrixUni, 1, false, textureMatrix.caddr)
+
+  var matrixUni = glGetUniformLocation(program, "u_matrix")
+  var matrix =
+    identityMatrix() *
+    projectionMatrix(800f, 600f) *
+    translationMatrix(0f, 0f) *
+    scalingMatrix(float32(width), float32(height))
+  var matrix2 = mat3(
+    vec3(7f / 40f, 0f, -1f),
+    vec3(0f, -1f / 3f, 1f),
+    vec3(0f, 0f, 1f)
+  )
+  echo matrix2
+  glUniformMatrix3fv(matrixUni, 1, false, matrix2.caddr)
+]#
 
   while not w.windowShouldClose:
-    glfwPollEvents()
+    glViewport(0, 0, 800, 600)
     glClearColor(173/255, 216/255, 230/255, 1f)
     glClear(GL_COLOR_BUFFER_BIT)
+
+    #glUniform1i(imageUni, unit)
+    glDrawArrays(GL_TRIANGLES, 0, drawCount)
+
     w.swapBuffers()
+    glfwPollEvents()
 
   w.destroyWindow()
   glfwTerminate()
