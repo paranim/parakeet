@@ -2,22 +2,12 @@ import nimgl/[glfw, opengl]
 import stb_image/read as stbi
 import sequtils
 import glm
-
-converter toSeqUint8(s: string): seq[uint8] = cast[seq[uint8]](s)
-
-proc toString(str: seq[char]): string =
-  result = newStringOfCap(len(str))
-  for ch in str:
-    add(result, ch)
+import utils, math
 
 proc keyProc(window: GLFWWindow, key: int32, scancode: int32,
              action: int32, mods: int32): void {.cdecl.} =
   if key == GLFWKey.ESCAPE and action == GLFWPress:
     window.setWindowShouldClose(true)
-
-type
-  Game = ref object
-    texCount: Natural
 
 const twoDVertexShader =
   """
@@ -80,116 +70,6 @@ const rect =
     0f, 1f,
     1f, 0f,
     1f, 1f]
-
-proc checkShaderStatus(shader: GLuint) =
-  var params: GLint
-  glGetShaderiv(shader, GL_COMPILE_STATUS, params.addr);
-  if params != GL_TRUE.ord:
-    var
-      length: GLsizei
-      message = newSeq[char](1024)
-    glGetShaderInfoLog(shader, 1024, length.addr, message[0].addr)
-    raise newException(Exception, toString(message))
-
-proc createShader(shaderType: GLenum, source: string) : GLuint =
-  result = glCreateShader(shaderType)
-  var sourceC = cstring(source)
-  glShaderSource(result, 1'i32, sourceC.addr, nil)
-  glCompileShader(result)
-  checkShaderStatus(result)
-
-proc checkProgramStatus(program: GLuint) =
-  var params: GLint
-  glGetProgramiv(program, GL_LINK_STATUS, params.addr);
-  if params != GL_TRUE.ord:
-    var
-      length: GLsizei
-      message = newSeq[char](1024)
-    glGetProgramInfoLog(program, 1024, length.addr, message[0].addr)
-    raise newException(Exception, toString(message))
-
-proc createProgram(vSource: string, fSource: string) : GLuint =
-  var vShader = createShader(GL_VERTEX_SHADER, vSource)
-  var fShader = createShader(GL_FRAGMENT_SHADER, fSource)
-  result = glCreateProgram()
-  glAttachShader(result, vShader)
-  glAttachShader(result, fShader)
-  glLinkProgram(result)
-  checkProgramStatus(result)
-
-type
-  Attribute = object
-    data: seq[cfloat]
-    size: GLint
-
-proc setArrayBuffer(program: GLuint, buffer: GLuint, attribName: string, attr: Attribute): GLsizei =
-  result = GLsizei(attr.data.len / attr.size)
-  var attribLocation = GLuint(glGetAttribLocation(program, cstring(attribName)))
-  var previousBuffer: GLint
-  glGetIntegerv(GL_ARRAY_BUFFER_BINDING, previousBuffer.addr)
-  glBindBuffer(GL_ARRAY_BUFFER, buffer)
-  glBufferData(GL_ARRAY_BUFFER, cint(cfloat.sizeof * attr.data.len), attr.data[0].unsafeAddr, GL_STATIC_DRAW)
-  glEnableVertexAttribArray(attribLocation)
-  glVertexAttribPointer(attribLocation, attr.size, EGL_FLOAT, false, GLsizei(cfloat.sizeof * attr.size), nil)
-  #glBindBuffer(GL_ARRAY_BUFFER, GLuint(previousBuffer))
-
-type
-  Opts = object
-    mipLevel: GLint
-    internalFmt: GLenum
-    width: GLsizei
-    height: GLsizei
-    border: GLint
-    srcFmt: GLenum
-    srcType: GLenum
-
-proc createTexture(game: Game, uniLoc: GLint, data: seq[uint8], opts: Opts, params: seq[(GLenum, GLenum)]): GLint =
-  game.texCount += 1
-  let unit = game.texCount - 1
-  var texture: GLuint
-  glGenTextures(1, texture.addr)
-  glActiveTexture(GLenum(GL_TEXTURE0.ord + unit))
-  glBindTexture(GL_TEXTURE_2D, texture)
-  for (paramName, paramVal) in params:
-    glTexParameteri(GL_TEXTURE_2D, paramName, GLint(paramVal))
-  # TODO: alignment
-  glTexImage2D(GL_TEXTURE_2D, opts.mipLevel, GLint(opts.internalFmt), opts.width, opts.height, opts.border, opts.srcFmt, opts.srcType, data[0].unsafeAddr)
-  # TODO: mipmap
-  GLint(unit)
-
-proc identityMatrix(): Mat3x3[cfloat] =
-  mat3x3(
-    vec3(1f, 0f, 0f),
-    vec3(0f, 1f, 0f),
-    vec3(0f, 0f, 1f)
-  )
-
-proc projectionMatrix(width: cfloat, height: cfloat): Mat3x3[cfloat] =
-  mat3x3(
-    #vec3(2f / width, 0f, 0f),
-    #vec3(0f, -2f / height, 0f),
-    #vec3(-1f, 1f, 1f)
-    vec3(2f / width, 0f, -1f),
-    vec3(0f, -2f / height, 1f),
-    vec3(0f, 0f, 1f)
-  )
-
-proc translationMatrix(x: cfloat, y: cfloat): Mat3x3[cfloat] =
-  mat3x3(
-    #vec3(1f, 0f, 0f),
-    #vec3(0f, 1f, 0f),
-    #vec3(x, y, 1f)
-    vec3(1f, 0f, x),
-    vec3(0f, 1f, y),
-    vec3(0f, 0f, 1f)
-  )
-
-proc scalingMatrix(x: cfloat, y: cfloat): Mat3x3[cfloat] =
-  mat3x3(
-    vec3(x, 0f, 0f),
-    vec3(0f, y, 0f),
-    vec3(0f, 0f, 1f)
-  )
 
 proc main() =
   assert glfwInit()
