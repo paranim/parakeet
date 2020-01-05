@@ -5,7 +5,7 @@ author        = "oakes"
 description   = "A new awesome nimble package"
 license       = "Public Domain"
 srcDir        = "src"
-bin           = @["platformer"]
+bin           = @["platformer", "rectangle"]
 
 
 

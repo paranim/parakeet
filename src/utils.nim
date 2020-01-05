@@ -1,7 +1,5 @@
 import nimgl/opengl
 
-converter toSeqUint8(s: string): seq[uint8] = cast[seq[uint8]](s)
-
 type
   Game* = ref object
     texCount*: Natural
