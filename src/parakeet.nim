@@ -72,7 +72,7 @@ proc main() =
   glDisable(GL_CULL_FACE)
   glDisable(GL_DEPTH_TEST)
 
-  let game = Game(texCount: 0)
+  var game = Game(texCount: 0)
 
   let program = createProgram(imageVertexShader, imageFragmentShader)
   glUseProgram(program)
