@@ -7,6 +7,9 @@ import tables
 when not defined(release):
   import hotcodereloading
 
+type
+  Game = object of RootGame
+
 converter toSeqUint8(s: string): seq[uint8] = cast[seq[uint8]](s)
 
 proc keyProc(window: GLFWWindow, key: int32, scancode: int32,
