@@ -22,7 +22,7 @@ const playerWalk1 = staticRead("assets/player_walk1.png")
 const playerWalk2 = staticRead("assets/player_walk2.png")
 const playerWalk3 = staticRead("assets/player_walk3.png")
 
-var drawCount: GLsizei
+var image: ImageEntity
 
 proc init*(): GLFWWindow =
   assert glfwInit()
@@ -53,27 +53,19 @@ proc init*(): GLFWWindow =
     width, height, channels: int
     data: seq[uint8]
   data = stbi.loadFromMemory(playerWalk1, width, height, channels, stbi.Default)
-  let image = initImageEntity(game, data, width, height)
+  image = initImageEntity(game, data, width, height)
 
-  let program = createProgram(image.vertexSource, image.fragmentSource)
-  glUseProgram(program)
-  var vao: GLuint
-  glGenVertexArrays(1, vao.addr)
-  glBindVertexArray(vao)
+  compile(game, image)
 
-  var positionBuf: GLuint
-  glGenBuffers(1, positionBuf.addr)
-  drawCount = setArrayBuffer(program, positionBuf, "a_position", Attribute(data: rect, size: 2))
-
-  var imageUni = glGetUniformLocation(program, "u_image")
+  var imageUni = glGetUniformLocation(image.program, "u_image")
   let unit = createTexture(game, imageUni, image.textureUniforms["u_image"])
   glUniform1i(imageUni, unit)
 
-  var textureMatrixUni = glGetUniformLocation(program, "u_texture_matrix")
+  var textureMatrixUni = glGetUniformLocation(image.program, "u_texture_matrix")
   var textureMatrix = identityMatrix()
   glUniformMatrix3fv(textureMatrixUni, 1, false, textureMatrix.caddr)
 
-  var matrixUni = glGetUniformLocation(program, "u_matrix")
+  var matrixUni = glGetUniformLocation(image.program, "u_matrix")
   var matrix = (
     scalingMatrix(cfloat(width), cfloat(height)) *
     translationMatrix(0f, 0f) *
@@ -92,7 +84,7 @@ proc update*(w: GLFWWindow) =
   glClear(GL_COLOR_BUFFER_BIT)
   glViewport(0, 0, 800, 600)
 
-  glDrawArrays(GL_TRIANGLES, 0, drawCount)
+  glDrawArrays(GL_TRIANGLES, 0, image.drawCount)
 
   w.swapBuffers()
   glfwPollEvents()
