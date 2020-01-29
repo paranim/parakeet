@@ -53,12 +53,12 @@ proc init*(): GLFWWindow =
     width, height, channels: int
     data: seq[uint8]
   data = stbi.loadFromMemory(playerWalk1, width, height, channels, stbi.Default)
-  image = initImageEntity(game, data, width, height)
+  let uncompiledImage = initImageEntity(game, data, width, height)
 
-  compile(game, image)
+  image = compile(game, uncompiledImage)
 
   var imageUni = glGetUniformLocation(image.program, "u_image")
-  let unit = createTexture(game, imageUni, image.textureUniforms["u_image"])
+  let unit = createTexture(game, imageUni, uncompiledImage.textureUniforms["u_image"])
   glUniform1i(imageUni, unit)
 
   var textureMatrixUni = glGetUniformLocation(image.program, "u_texture_matrix")
