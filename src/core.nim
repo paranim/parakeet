@@ -1,8 +1,7 @@
 import nimgl/opengl
 import stb_image/read as stbi
 import glm
-import paranim/gl, paranim/gl/utils, paranim/gl/entities2d, paranim/primitives2d
-import tables
+import paranim/gl, paranim/gl/entities2d, paranim/primitives2d
 
 type
   Game* = object of RootGame
@@ -32,7 +31,7 @@ proc init*(game: var Game) =
   image = compile(game, uncompiledImage)
 
   var imageUni = glGetUniformLocation(image.program, "u_image")
-  let unit = createTexture(game, imageUni, uncompiledImage.textureUniforms["u_image"])
+  let unit = createTexture(game, imageUni, uncompiledImage.uniforms.u_image)
   glUniform1i(imageUni, unit)
 
   var textureMatrixUni = glGetUniformLocation(image.program, "u_texture_matrix")
