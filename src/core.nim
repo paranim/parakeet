@@ -26,26 +26,15 @@ proc init*(game: var Game) =
     width, height, channels: int
     data: seq[uint8]
   data = stbi.loadFromMemory(playerWalk1, width, height, channels, stbi.Default)
-  let uncompiledImage = initImageEntity(game, data, width, height)
+  var uncompiledImage = initImageEntity(game, data, width, height)
 
-  image = compile(game, uncompiledImage)
-
-  var imageUni = glGetUniformLocation(image.program, "u_image")
-  let unit = createTexture(game, imageUni, uncompiledImage.uniforms.u_image)
-  glUniform1i(imageUni, unit)
-
-  var textureMatrixUni = glGetUniformLocation(image.program, "u_texture_matrix")
-  var textureMatrix = identityMatrix()
-  glUniformMatrix3fv(textureMatrixUni, 1, false, textureMatrix.caddr)
-
-  var matrixUni = glGetUniformLocation(image.program, "u_matrix")
-  var matrix = (
+  uncompiledImage.uniforms.u_matrix =
     scalingMatrix(cfloat(width), cfloat(height)) *
     translationMatrix(0f, 0f) *
     projectionMatrix(800f, 600f) *
     identityMatrix()
-  ).transpose()
-  glUniformMatrix3fv(matrixUni, 1, false, matrix.caddr)
+
+  image = compile(game, uncompiledImage)
 
 proc tick*(game: Game) =
   glClearColor(173/255, 216/255, 230/255, 1f)
