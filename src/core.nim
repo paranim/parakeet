@@ -1,7 +1,6 @@
 import nimgl/opengl
 import stb_image/read as stbi
-import glm
-import paranim/gl, paranim/gl/entities2d, paranim/primitives2d
+import paranim/gl, paranim/gl/entities2d
 
 type
   Game* = object of RootGame
@@ -28,11 +27,9 @@ proc init*(game: var Game) =
   data = stbi.loadFromMemory(playerWalk1, width, height, channels, stbi.Default)
   var uncompiledImage = initImageEntity(game, data, width, height)
 
-  uncompiledImage.uniforms.u_matrix =
-    scalingMatrix(cfloat(width), cfloat(height)) *
-    translationMatrix(0f, 0f) *
-    projectionMatrix(800f, 600f) *
-    identityMatrix()
+  uncompiledImage.project(800f, 600f)
+  uncompiledImage.translate(0f, 0f)
+  uncompiledImage.scale(cfloat(width), cfloat(height))
 
   image = compile(game, uncompiledImage)
 
