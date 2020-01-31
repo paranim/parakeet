@@ -40,6 +40,5 @@ proc tick*(game: Game) =
   glClearColor(173/255, 216/255, 230/255, 1f)
   glClear(GL_COLOR_BUFFER_BIT)
   glViewport(0, 0, 800, 600)
-
-  glDrawArrays(GL_TRIANGLES, 0, image.drawCount)
+  render(game, image)
 
