@@ -25,7 +25,7 @@ proc init*(game: var Game) =
     width, height, channels: int
     data: seq[uint8]
   data = stbi.loadFromMemory(playerWalk1, width, height, channels, stbi.Default)
-  var uncompiledImage = initImageEntity(game, data, width, height)
+  var uncompiledImage = initImageEntity(data, width, height)
 
   uncompiledImage.project(800f, 600f)
   uncompiledImage.translate(0f, 0f)
