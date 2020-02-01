@@ -14,7 +14,7 @@ proc keyProc(window: GLFWWindow, key: int32, scancode: int32,
       performCodeReload()
 
 proc resizeProc(window: GLFWWindow, width: int32, height: int32): void {.cdecl.} =
-  resizeWindow(cfloat(width), cfloat(height))
+  resizeWindow(width, height)
 
 when isMainModule:
   assert glfwInit()
@@ -32,15 +32,18 @@ when isMainModule:
   discard w.setKeyCallback(keyProc)
   w.makeContextCurrent()
 
-  var game = Game()
-  game.init()
-
   discard w.setWindowSizeCallback(resizeProc)
   var width, height: int32
   w.getFramebufferSize(width.addr, height.addr)
   w.resizeProc(width, height)
 
+  var game = Game()
+  game.init()
+
   while not w.windowShouldClose:
+    let ts = glfwGetTime()
+    game.deltaTime = ts - game.totalTime
+    game.totalTime = ts
     game.tick()
     w.swapBuffers()
     glfwPollEvents()

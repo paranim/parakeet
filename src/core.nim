@@ -5,6 +5,9 @@ import pararules
 
 type
   Game* = object of RootGame
+    deltaTime*: float64
+    totalTime*: float64
+    image: ImageEntity
 
 converter toSeqUint8(s: string): seq[uint8] = cast[seq[uint8]](s)
 
@@ -14,11 +17,15 @@ const playerWalk3 = staticRead("assets/player_walk3.png")
 
 type
   Id = enum
-    Window, Player
+    Global, Player
   Attr = enum
+    DeltaTime, WindowWidth, WindowHeight,
     X, Y, Width, Height
 
 schema Fact(Id, Attr):
+  DeltaTime: float64
+  WindowWidth: int32
+  WindowHeight: int32
   X: cfloat
   Y: cfloat
   Width: cfloat
@@ -26,23 +33,25 @@ schema Fact(Id, Attr):
 
 let rules =
   ruleset:
-    rule windowResized(Fact):
+    rule getWindow(Fact):
       what:
-        (Window, Width, width)
-        (Window, Height, height)
-      then:
-        echo width, " ", height
+        (Global, WindowWidth, windowWidth)
+        (Global, WindowHeight, windowHeight)
+    rule getPlayer(Fact):
+      what:
+        (Player, X, x)
+        (Player, Y, y)
+        (Player, Width, width)
+        (Player, Height, height)
 
 let session = newSession(Fact)
 
 for r in rules.fields:
   session.add(r)
 
-var image: ImageEntity
-
-proc resizeWindow*(width: cfloat, height: cfloat) =
-  session.insert(Window, Width, width)
-  session.insert(Window, Height, height)
+proc resizeWindow*(width: int32, height: int32) =
+  session.insert(Global, WindowWidth, width)
+  session.insert(Global, WindowHeight, height)
 
 proc init*(game: var Game) =
   assert glInit()
@@ -58,15 +67,26 @@ proc init*(game: var Game) =
   data = stbi.loadFromMemory(playerWalk1, width, height, channels, stbi.Default)
   var uncompiledImage = initImageEntity(data, width, height)
 
-  uncompiledImage.project(800f, 600f)
-  uncompiledImage.translate(0f, 0f)
-  uncompiledImage.scale(cfloat(width), cfloat(height))
+  game.image = compile(game, uncompiledImage)
 
-  image = compile(game, uncompiledImage)
+  session.insert(Player, X, 0f)
+  session.insert(Player, Y, 0f)
+  session.insert(Player, Width, cfloat(width))
+  session.insert(Player, Height, cfloat(height))
 
 proc tick*(game: Game) =
+  let (windowWidth, windowHeight) = session.get(rules.getWindow, session.find(rules.getWindow))
+  let (x, y, width, height) = session.get(rules.getPlayer, session.find(rules.getPlayer))
+
   glClearColor(173/255, 216/255, 230/255, 1f)
   glClear(GL_COLOR_BUFFER_BIT)
-  glViewport(0, 0, 800, 600)
+  glViewport(0, 0, windowWidth, windowHeight)
+
+  var image = game.image
+  image.project(cfloat(windowWidth), cfloat(windowHeight))
+  image.translate(x, y)
+  image.scale(width, height)
   render(game, image)
+
+  session.insert(Global, DeltaTime, game.deltaTime)
 
