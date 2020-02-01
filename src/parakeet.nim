@@ -13,6 +13,9 @@ proc keyProc(window: GLFWWindow, key: int32, scancode: int32,
     if key == GLFWKey.ENTER and action == GLFWPress:
       performCodeReload()
 
+proc resizeProc(window: GLFWWindow, width: int32, height: int32): void {.cdecl.} =
+  resizeWindow(cfloat(width), cfloat(height))
+
 when isMainModule:
   assert glfwInit()
 
@@ -31,6 +34,11 @@ when isMainModule:
 
   var game = Game()
   game.init()
+
+  discard w.setWindowSizeCallback(resizeProc)
+  var width, height: int32
+  w.getFramebufferSize(width.addr, height.addr)
+  w.resizeProc(width, height)
 
   while not w.windowShouldClose:
     game.tick()
