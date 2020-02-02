@@ -1,17 +1,10 @@
 import nimgl/glfw
 import core
 
-when not defined(release):
-  import hotcodereloading
-
 proc keyProc(window: GLFWWindow, key: int32, scancode: int32,
              action: int32, mods: int32): void {.cdecl.} =
   if key == GLFWKey.ESCAPE and action == GLFWPress:
     window.setWindowShouldClose(true)
-
-  when not defined(release):
-    if key == GLFWKey.ENTER and action == GLFWPress:
-      performCodeReload()
 
 proc resizeProc(window: GLFWWindow, width: int32, height: int32): void {.cdecl.} =
   resizeWindow(width, height)
