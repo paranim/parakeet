@@ -15,12 +15,17 @@ const playerWalk1 = staticRead("assets/player_walk1.png")
 const playerWalk2 = staticRead("assets/player_walk2.png")
 const playerWalk3 = staticRead("assets/player_walk3.png")
 
+const gravity = 500
+const deceleration = 0.7
+const damping = 0.1
+
 type
   Id = enum
     Global, Player
   Attr = enum
     DeltaTime, WindowWidth, WindowHeight,
-    X, Y, Width, Height
+    X, Y, Width, Height,
+    XVelocity, YVelocity, XChange, YChange
 
 schema Fact(Id, Attr):
   DeltaTime: float
@@ -30,6 +35,17 @@ schema Fact(Id, Attr):
   Y: float
   Width: float
   Height: float
+  XVelocity: float
+  YVelocity: float
+  XChange: float
+  YChange: float
+
+proc decelerate(velocity: float): float =
+  let v = velocity * deceleration
+  if abs(v) < damping:
+    0f
+  else:
+    v
 
 let rules =
   ruleset:
@@ -43,6 +59,43 @@ let rules =
         (Player, Y, y)
         (Player, Width, width)
         (Player, Height, height)
+    rule movePlayer(Fact):
+      what:
+        (Global, DeltaTime, dt)
+        (Player, X, x, false)
+        (Player, Y, y, false)
+        (Player, XVelocity, xv, false)
+        (Player, YVelocity, yv, false)
+      then:
+        let newYv = yv + gravity
+        let xChange = xv * dt
+        let yChange = newYv * dt
+        session.insert(Player, XVelocity, decelerate(xv))
+        session.insert(Player, YVelocity, decelerate(newYv))
+        session.insert(Player, XChange, xChange)
+        session.insert(Player, YChange, yChange)
+        session.insert(Player, X, x + xChange)
+        session.insert(Player, Y, y + yChange)
+    rule preventMoveX(Fact):
+      what:
+        (Global, WindowWidth, windowWidth)
+        (Player, X, x)
+        (Player, Width, width)
+        (Player, XChange, xChange)
+      cond:
+        x < 0 or x > float(windowWidth) - width
+      then:
+        session.insert(Player, X, x - xChange)
+    rule preventMoveY(Fact):
+      what:
+        (Global, WindowHeight, windowHeight)
+        (Player, Y, y)
+        (Player, Height, height)
+        (Player, YChange, yChange)
+      cond:
+        y > float(windowHeight) - height
+      then:
+        session.insert(Player, Y, y - yChange)
 
 let session = newSession(Fact)
 
@@ -73,6 +126,8 @@ proc init*(game: var Game) =
   session.insert(Player, Y, 0f)
   session.insert(Player, Width, float(width))
   session.insert(Player, Height, float(height))
+  session.insert(Player, XVelocity, 0f)
+  session.insert(Player, YVelocity, 0f)
 
 proc tick*(game: Game) =
   let (windowWidth, windowHeight) = session.get(rules.getWindow, session.find(rules.getWindow))
