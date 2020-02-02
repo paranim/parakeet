@@ -5,8 +5,8 @@ import pararules
 
 type
   Game* = object of RootGame
-    deltaTime*: float64
-    totalTime*: float64
+    deltaTime*: float
+    totalTime*: float
     image: ImageEntity
 
 converter toSeqUint8(s: string): seq[uint8] = cast[seq[uint8]](s)
@@ -23,13 +23,13 @@ type
     X, Y, Width, Height
 
 schema Fact(Id, Attr):
-  DeltaTime: float64
-  WindowWidth: int32
-  WindowHeight: int32
-  X: cfloat
-  Y: cfloat
-  Width: cfloat
-  Height: cfloat
+  DeltaTime: float
+  WindowWidth: int
+  WindowHeight: int
+  X: float
+  Y: float
+  Width: float
+  Height: float
 
 let rules =
   ruleset:
@@ -49,7 +49,7 @@ let session = newSession(Fact)
 for r in rules.fields:
   session.add(r)
 
-proc resizeWindow*(width: int32, height: int32) =
+proc resizeWindow*(width: int, height: int) =
   session.insert(Global, WindowWidth, width)
   session.insert(Global, WindowHeight, height)
 
@@ -71,8 +71,8 @@ proc init*(game: var Game) =
 
   session.insert(Player, X, 0f)
   session.insert(Player, Y, 0f)
-  session.insert(Player, Width, cfloat(width))
-  session.insert(Player, Height, cfloat(height))
+  session.insert(Player, Width, float(width))
+  session.insert(Player, Height, float(height))
 
 proc tick*(game: Game) =
   let (windowWidth, windowHeight) = session.get(rules.getWindow, session.find(rules.getWindow))
@@ -80,10 +80,10 @@ proc tick*(game: Game) =
 
   glClearColor(173/255, 216/255, 230/255, 1f)
   glClear(GL_COLOR_BUFFER_BIT)
-  glViewport(0, 0, windowWidth, windowHeight)
+  glViewport(0, 0, int32(windowWidth), int32(windowHeight))
 
   var image = game.image
-  image.project(cfloat(windowWidth), cfloat(windowHeight))
+  image.project(float(windowWidth), float(windowHeight))
   image.translate(x, y)
   image.scale(width, height)
   render(game, image)
