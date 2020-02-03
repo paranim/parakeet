@@ -2,6 +2,7 @@ import nimgl/opengl
 import stb_image/read as stbi
 import paranim/gl, paranim/gl/entities2d
 import pararules
+import sets
 
 type
   Game* = object of RootGame
@@ -23,9 +24,10 @@ type
   Id = enum
     Global, Player
   Attr = enum
-    DeltaTime, WindowWidth, WindowHeight,
+    DeltaTime, WindowWidth, WindowHeight, PressedKeys,
     X, Y, Width, Height,
-    XVelocity, YVelocity, XChange, YChange
+    XVelocity, YVelocity, XChange, YChange,
+  IntSet = HashSet[int]
 
 schema Fact(Id, Attr):
   DeltaTime: float
@@ -39,6 +41,7 @@ schema Fact(Id, Attr):
   YVelocity: float
   XChange: float
   YChange: float
+  PressedKeys: IntSet
 
 proc decelerate(velocity: float): float =
   let v = velocity * deceleration
@@ -53,6 +56,9 @@ let rules =
       what:
         (Global, WindowWidth, windowWidth)
         (Global, WindowHeight, windowHeight)
+    rule getKeys(Fact):
+      what:
+        (Global, PressedKeys, keys)
     rule getPlayer(Fact):
       what:
         (Player, X, x)
@@ -106,6 +112,16 @@ proc resizeWindow*(width: int, height: int) =
   session.insert(Global, WindowWidth, width)
   session.insert(Global, WindowHeight, height)
 
+proc keyDown*(key: int) =
+  var (keys) = session.get(rules.getKeys, session.find(rules.getKeys))
+  keys.incl(key)
+  session.insert(Global, PressedKeys, keys)
+
+proc keyUp*(key: int) =
+  var (keys) = session.get(rules.getKeys, session.find(rules.getKeys))
+  keys.excl(key)
+  session.insert(Global, PressedKeys, keys)
+
 proc init*(game: var Game) =
   assert glInit()
 
@@ -128,6 +144,7 @@ proc init*(game: var Game) =
   session.insert(Player, Height, float(height))
   session.insert(Player, XVelocity, 0f)
   session.insert(Player, YVelocity, 0f)
+  session.insert(Global, PressedKeys, initHashSet[int]())
 
 proc tick*(game: Game) =
   let (windowWidth, windowHeight) = session.get(rules.getWindow, session.find(rules.getWindow))
