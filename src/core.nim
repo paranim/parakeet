@@ -97,7 +97,7 @@ let rules =
       then:
         session.insert(Player, Y, y - yChange)
 
-let session = newSession(Fact)
+let session = initSession(Fact)
 
 for r in rules.fields:
   session.add(r)
