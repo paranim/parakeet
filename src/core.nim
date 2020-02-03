@@ -62,10 +62,10 @@ let rules =
     rule movePlayer(Fact):
       what:
         (Global, DeltaTime, dt)
-        (Player, X, x, false)
-        (Player, Y, y, false)
-        (Player, XVelocity, xv, false)
-        (Player, YVelocity, yv, false)
+        (Player, X, x, then = false)
+        (Player, Y, y, then = false)
+        (Player, XVelocity, xv, then = false)
+        (Player, YVelocity, yv, then = false)
       then:
         yv = yv + gravity
         let xChange = xv * dt
