@@ -67,11 +67,11 @@ let rules =
         (Player, XVelocity, xv, false)
         (Player, YVelocity, yv, false)
       then:
-        let newYv = yv + gravity
+        yv = yv + gravity
         let xChange = xv * dt
-        let yChange = newYv * dt
+        let yChange = yv * dt
         session.insert(Player, XVelocity, decelerate(xv))
-        session.insert(Player, YVelocity, decelerate(newYv))
+        session.insert(Player, YVelocity, decelerate(yv))
         session.insert(Player, XChange, xChange)
         session.insert(Player, YChange, yChange)
         session.insert(Player, X, x + xChange)
