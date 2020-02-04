@@ -17,11 +17,11 @@ const playerWalk1 = staticRead("assets/player_walk1.png")
 const playerWalk2 = staticRead("assets/player_walk2.png")
 const playerWalk3 = staticRead("assets/player_walk3.png")
 
-const gravity = 250
-const deceleration = 0.8
+const gravity = 500
+const deceleration = 0.7
 const damping = 0.1
 const maxVelocity = 1000f
-const maxJumpVelocity = float(maxVelocity * 16)
+const maxJumpVelocity = float(maxVelocity * 8)
 
 type
   Id = enum

@@ -35,6 +35,7 @@ when isMainModule:
     quit(-1)
 
   w.makeContextCurrent()
+  glfwSwapInterval(1)
 
   discard w.setKeyCallback(keyProc)
   discard w.setMouseButtonCallback(mouseButtonProc)
