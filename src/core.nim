@@ -30,7 +30,7 @@ type
     DeltaTime, WindowWidth, WindowHeight,
     PressedKeys, MouseClick, MousePosition,
     X, Y, Width, Height,
-    XVelocity, YVelocity
+    XVelocity, YVelocity, XChange, YChange,
     CanJump,
   IntSet = HashSet[int]
   XYTuple = tuple[x: float, y: float]
@@ -48,6 +48,8 @@ schema Fact(Id, Attr):
   Height: float
   XVelocity: float
   YVelocity: float
+  XChange: float
+  YChange: float
   CanJump: bool
 
 proc decelerate(velocity: float): float =
@@ -114,36 +116,47 @@ let rules =
         let yChange = yv * dt
         session.insert(Player, XVelocity, decelerate(xv))
         session.insert(Player, YVelocity, decelerate(yv))
+        session.insert(Player, XChange, xChange)
+        session.insert(Player, YChange, yChange)
         session.insert(Player, X, x + xChange)
         session.insert(Player, Y, y + yChange)
     rule preventMoveLeft(Fact):
       what:
         (Global, WindowWidth, windowWidth)
         (Player, X, x)
+        (Player, XChange, xChange)
       cond:
         x < 0
       then:
-        session.insert(Player, X, 0f)
+        let oldX = x - xChange
+        let leftEdge = 0f
+        session.insert(Player, X, max(oldX, leftEdge))
         session.insert(Player, XVelocity, 0f)
     rule preventMoveRight(Fact):
       what:
         (Global, WindowWidth, windowWidth)
         (Player, X, x)
         (Player, Width, width)
+        (Player, XChange, xChange)
       cond:
         x > float(windowWidth) - width
       then:
-        session.insert(Player, X, float(windowWidth) - width)
+        let oldX = x - xChange
+        let rightEdge = float(windowWidth) - width
+        session.insert(Player, X, min(oldX, rightEdge))
         session.insert(Player, XVelocity, 0f)
     rule preventMoveDown(Fact):
       what:
         (Global, WindowHeight, windowHeight)
         (Player, Y, y)
         (Player, Height, height)
+        (Player, YChange, yChange)
       cond:
         y > float(windowHeight) - height
       then:
-        session.insert(Player, Y, float(windowHeight) - height)
+        let oldY = y - yChange
+        let bottomEdge = float(windowHeight) - height
+        session.insert(Player, Y, min(oldY, bottomEdge))
         session.insert(Player, YVelocity, 0f)
 
 let session = initSession(Fact)
