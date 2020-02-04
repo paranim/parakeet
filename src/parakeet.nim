@@ -30,7 +30,7 @@ when isMainModule:
   glfwWindowHint(GLFWOpenglProfile, GLFW_OPENGL_CORE_PROFILE)
   glfwWindowHint(GLFWResizable, GLFW_TRUE)
 
-  let w: GLFWWindow = glfwCreateWindow(800, 600, "NimGL")
+  let w: GLFWWindow = glfwCreateWindow(800, 600, "Parakeet")
   if w == nil:
     quit(-1)
 
