@@ -24,15 +24,20 @@ type
   Id = enum
     Global, Player
   Attr = enum
-    DeltaTime, WindowWidth, WindowHeight, PressedKeys,
+    DeltaTime, WindowWidth, WindowHeight,
+    PressedKeys, MouseClick, MousePosition,
     X, Y, Width, Height,
     XVelocity, YVelocity, XChange, YChange,
   IntSet = HashSet[int]
+  XYTuple = tuple[x: float, y: float]
 
 schema Fact(Id, Attr):
   DeltaTime: float
   WindowWidth: int
   WindowHeight: int
+  PressedKeys: IntSet
+  MouseClick: int
+  MousePosition: XYTuple
   X: float
   Y: float
   Width: float
@@ -41,7 +46,6 @@ schema Fact(Id, Attr):
   YVelocity: float
   XChange: float
   YChange: float
-  PressedKeys: IntSet
 
 proc decelerate(velocity: float): float =
   let v = velocity * deceleration
@@ -108,10 +112,6 @@ let session = initSession(Fact)
 for r in rules.fields:
   session.add(r)
 
-proc resizeWindow*(width: int, height: int) =
-  session.insert(Global, WindowWidth, width)
-  session.insert(Global, WindowHeight, height)
-
 proc keyDown*(key: int) =
   var (keys) = session.get(rules.getKeys, session.find(rules.getKeys))
   keys.incl(key)
@@ -121,6 +121,16 @@ proc keyUp*(key: int) =
   var (keys) = session.get(rules.getKeys, session.find(rules.getKeys))
   keys.excl(key)
   session.insert(Global, PressedKeys, keys)
+
+proc mouseButton*(button: int) =
+  session.insert(Global, MouseClick, button)
+
+proc mousePosition*(xpos: float, ypos: float) =
+  session.insert(Global, MousePosition, (xpos, ypos))
+
+proc resizeWindow*(width: int, height: int) =
+  session.insert(Global, WindowWidth, width)
+  session.insert(Global, WindowHeight, height)
 
 proc init*(game: var Game) =
   assert glInit()

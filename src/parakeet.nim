@@ -11,6 +11,13 @@ proc keyProc(window: GLFWWindow, key: int32, scancode: int32,
   elif action == GLFW_RELEASE:
     keyUp(key)
 
+proc mouseButtonProc(window: GLFWWindow, button: int32, action: int32, mods: int32): void {.cdecl.} =
+  if action == GLFWPress:
+    mouseButton(button)
+
+proc mousePositionProc(window: GLFWWindow, xpos: float64, ypos: float64): void {.cdecl.} =
+  mousePosition(xpos, ypos)
+
 proc resizeProc(window: GLFWWindow, width: int32, height: int32): void {.cdecl.} =
   resizeWindow(width, height)
 
@@ -27,9 +34,11 @@ when isMainModule:
   if w == nil:
     quit(-1)
 
-  discard w.setKeyCallback(keyProc)
   w.makeContextCurrent()
 
+  discard w.setKeyCallback(keyProc)
+  discard w.setMouseButtonCallback(mouseButtonProc)
+  discard w.setCursorPosCallback(mousePositionProc)
   discard w.setWindowSizeCallback(resizeProc)
   var width, height: int32
   w.getFramebufferSize(width.addr, height.addr)
