@@ -224,7 +224,7 @@ proc init*(game: var Game) =
     width, height, channels: int
     data: seq[uint8]
   for i in 0 ..< images.len:
-    data = stbi.loadFromMemory(images[i], width, height, channels, stbi.Default)
+    data = stbi.loadFromMemory(images[i], width, height, channels, stbi.RGBA)
     let uncompiledImage = initImageEntity(data, width, height)
     game.imageEntities[i] = compile(game, uncompiledImage)
 
