@@ -4,39 +4,45 @@ import stb_image/read as stbi
 import paranim/gl, paranim/gl/entities2d
 import pararules
 import sets
+from math import `mod`
 
 type
   Game* = object of RootGame
     deltaTime*: float
     totalTime*: float
-    image: ImageEntity
+    imageEntities: array[3, ImageEntity]
 
 converter toSeqUint8(s: string): seq[uint8] = cast[seq[uint8]](s)
 
-const playerWalk1 = staticRead("assets/player_walk1.png")
-const playerWalk2 = staticRead("assets/player_walk2.png")
-const playerWalk3 = staticRead("assets/player_walk3.png")
-
+const images = [
+  staticRead("assets/player_walk1.png"),
+  staticRead("assets/player_walk2.png"),
+  staticRead("assets/player_walk3.png")
+]
 const gravity = 500
 const deceleration = 0.7
 const damping = 0.1
 const maxVelocity = 1000f
 const maxJumpVelocity = float(maxVelocity * 8)
+const animationSecs = 0.2
 
 type
   Id = enum
     Global, Player
   Attr = enum
-    DeltaTime, WindowWidth, WindowHeight,
+    DeltaTime, TotalTime, WindowWidth, WindowHeight,
     PressedKeys, MouseClick, MousePosition,
     X, Y, Width, Height,
     XVelocity, YVelocity, XChange, YChange,
-    CanJump,
+    CanJump, ImageIndex, Direction,
+  DirectionName = enum
+    Left, Right
   IntSet = HashSet[int]
   XYTuple = tuple[x: float, y: float]
 
 schema Fact(Id, Attr):
   DeltaTime: float
+  TotalTime: float
   WindowWidth: int
   WindowHeight: int
   PressedKeys: IntSet
@@ -51,6 +57,8 @@ schema Fact(Id, Attr):
   XChange: float
   YChange: float
   CanJump: bool
+  ImageIndex: int
+  Direction: DirectionName
 
 proc decelerate(velocity: float): float =
   let v = velocity * deceleration
@@ -61,6 +69,7 @@ proc decelerate(velocity: float): float =
 
 let rules =
   ruleset:
+    # getters
     rule getWindow(Fact):
       what:
         (Global, WindowWidth, windowWidth)
@@ -74,6 +83,9 @@ let rules =
         (Player, Y, y)
         (Player, Width, width)
         (Player, Height, height)
+        (Player, ImageIndex, imageIndex)
+        (Player, Direction, direction)
+    # enable and perform jumping
     rule allowJump(Fact):
       what:
         (Global, WindowHeight, windowHeight)
@@ -95,6 +107,7 @@ let rules =
       then:
         session.insert(Player, CanJump, false)
         session.insert(Player, YVelocity, -1 * maxJumpVelocity)
+    # move the player's x,y position and animate
     rule movePlayer(Fact):
       what:
         (Global, DeltaTime, dt)
@@ -120,6 +133,20 @@ let rules =
         session.insert(Player, YChange, yChange)
         session.insert(Player, X, x + xChange)
         session.insert(Player, Y, y + yChange)
+    rule animatePlayer(Fact):
+      what:
+        (Global, TotalTime, tt)
+        (Player, XVelocity, xv)
+        (Player, YVelocity, yv)
+      cond:
+        xv != 0
+        yv == 0
+      then:
+        let cycleTime = tt mod (animationSecs * images.len)
+        let index = int(cycleTime / animationSecs)
+        session.insert(Player, ImageIndex, index)
+        session.insert(Player, Direction, if xv > 0: Right else: Left)
+    # prevent going through walls
     rule preventMoveLeft(Fact):
       what:
         (Global, WindowWidth, windowWidth)
@@ -185,43 +212,48 @@ proc resizeWindow*(width: int, height: int) =
   session.insert(Global, WindowHeight, height)
 
 proc init*(game: var Game) =
+  # opengl
   assert glInit()
-
   glEnable(GL_BLEND)
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
   glDisable(GL_CULL_FACE)
   glDisable(GL_DEPTH_TEST)
 
+  # load images
   var
     width, height, channels: int
     data: seq[uint8]
-  data = stbi.loadFromMemory(playerWalk1, width, height, channels, stbi.Default)
-  var uncompiledImage = initImageEntity(data, width, height)
+  for i in 0 ..< images.len:
+    data = stbi.loadFromMemory(images[i], width, height, channels, stbi.Default)
+    let uncompiledImage = initImageEntity(data, width, height)
+    game.imageEntities[i] = compile(game, uncompiledImage)
 
-  game.image = compile(game, uncompiledImage)
-
+  # set initial values
+  session.insert(Global, PressedKeys, initHashSet[int]())
   session.insert(Player, X, 0f)
   session.insert(Player, Y, 0f)
   session.insert(Player, Width, float(width))
   session.insert(Player, Height, float(height))
   session.insert(Player, XVelocity, 0f)
   session.insert(Player, YVelocity, 0f)
-  session.insert(Global, PressedKeys, initHashSet[int]())
   session.insert(Player, CanJump, false)
+  session.insert(Player, ImageIndex, 0)
+  session.insert(Player, Direction, Right)
 
 proc tick*(game: Game) =
   let (windowWidth, windowHeight) = session.query(rules.getWindow)
-  let (x, y, width, height) = session.query(rules.getPlayer)
+  let (x, y, width, height, imageIndex, direction) = session.query(rules.getPlayer)
 
   glClearColor(173/255, 216/255, 230/255, 1f)
   glClear(GL_COLOR_BUFFER_BIT)
   glViewport(0, 0, int32(windowWidth), int32(windowHeight))
 
-  var image = game.image
+  var image = game.imageEntities[imageIndex]
   image.project(float(windowWidth), float(windowHeight))
-  image.translate(x, y)
-  image.scale(width, height)
+  image.translate(if direction == Right: x else: x + width, y)
+  image.scale(if direction == Right: width else: width * -1, height)
   render(game, image)
 
   session.insert(Global, DeltaTime, game.deltaTime)
+  session.insert(Global, TotalTime, game.totalTime)
 
