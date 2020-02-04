@@ -17,8 +17,8 @@ const playerWalk1 = staticRead("assets/player_walk1.png")
 const playerWalk2 = staticRead("assets/player_walk2.png")
 const playerWalk3 = staticRead("assets/player_walk3.png")
 
-const gravity = 500
-const deceleration = 0.7
+const gravity = 250
+const deceleration = 0.8
 const damping = 0.1
 const maxVelocity = 1000f
 const maxJumpVelocity = float(maxVelocity * 16)
@@ -30,7 +30,7 @@ type
     DeltaTime, WindowWidth, WindowHeight,
     PressedKeys, MouseClick, MousePosition,
     X, Y, Width, Height,
-    XVelocity, YVelocity, XChange, YChange,
+    XVelocity, YVelocity
     CanJump,
   IntSet = HashSet[int]
   XYTuple = tuple[x: float, y: float]
@@ -48,8 +48,6 @@ schema Fact(Id, Attr):
   Height: float
   XVelocity: float
   YVelocity: float
-  XChange: float
-  YChange: float
   CanJump: bool
 
 proc decelerate(velocity: float): float =
@@ -98,40 +96,55 @@ let rules =
     rule movePlayer(Fact):
       what:
         (Global, DeltaTime, dt)
+        (Global, PressedKeys, keys, then = false)
         (Player, X, x, then = false)
         (Player, Y, y, then = false)
         (Player, XVelocity, xv, then = false)
         (Player, YVelocity, yv, then = false)
       then:
+        xv =
+          if keys.contains(int(GLFWKey.Left)):
+            -1 * maxVelocity
+          elif keys.contains(int(GLFWKey.Right)):
+            maxVelocity
+          else:
+            xv
         yv = yv + gravity
         let xChange = xv * dt
         let yChange = yv * dt
         session.insert(Player, XVelocity, decelerate(xv))
         session.insert(Player, YVelocity, decelerate(yv))
-        session.insert(Player, XChange, xChange)
-        session.insert(Player, YChange, yChange)
         session.insert(Player, X, x + xChange)
         session.insert(Player, Y, y + yChange)
-    rule preventMoveX(Fact):
+    rule preventMoveLeft(Fact):
+      what:
+        (Global, WindowWidth, windowWidth)
+        (Player, X, x)
+      cond:
+        x < 0
+      then:
+        session.insert(Player, X, 0f)
+        session.insert(Player, XVelocity, 0f)
+    rule preventMoveRight(Fact):
       what:
         (Global, WindowWidth, windowWidth)
         (Player, X, x)
         (Player, Width, width)
-        (Player, XChange, xChange)
       cond:
-        x < 0 or x > float(windowWidth) - width
+        x > float(windowWidth) - width
       then:
-        session.insert(Player, X, x - xChange)
-    rule preventMoveY(Fact):
+        session.insert(Player, X, float(windowWidth) - width)
+        session.insert(Player, XVelocity, 0f)
+    rule preventMoveDown(Fact):
       what:
         (Global, WindowHeight, windowHeight)
         (Player, Y, y)
         (Player, Height, height)
-        (Player, YChange, yChange)
       cond:
         y > float(windowHeight) - height
       then:
-        session.insert(Player, Y, y - yChange)
+        session.insert(Player, Y, float(windowHeight) - height)
+        session.insert(Player, YVelocity, 0f)
 
 let session = initSession(Fact)
 
