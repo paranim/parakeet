@@ -139,12 +139,12 @@ for r in rules.fields:
   session.add(r)
 
 proc keyDown*(key: int) =
-  var (keys) = session.get(rules.getKeys, session.find(rules.getKeys))
+  var (keys) = session.query(rules.getKeys)
   keys.incl(key)
   session.insert(Global, PressedKeys, keys)
 
 proc keyUp*(key: int) =
-  var (keys) = session.get(rules.getKeys, session.find(rules.getKeys))
+  var (keys) = session.query(rules.getKeys)
   keys.excl(key)
   session.insert(Global, PressedKeys, keys)
 
@@ -184,8 +184,8 @@ proc init*(game: var Game) =
   session.insert(Player, CanJump, false)
 
 proc tick*(game: Game) =
-  let (windowWidth, windowHeight) = session.get(rules.getWindow, session.find(rules.getWindow))
-  let (x, y, width, height) = session.get(rules.getPlayer, session.find(rules.getPlayer))
+  let (windowWidth, windowHeight) = session.query(rules.getWindow)
+  let (x, y, width, height) = session.query(rules.getPlayer)
 
   glClearColor(173/255, 216/255, 230/255, 1f)
   glClear(GL_COLOR_BUFFER_BIT)
