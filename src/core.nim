@@ -1,4 +1,5 @@
 import nimgl/opengl
+from nimgl/glfw import GLFWKey
 import stb_image/read as stbi
 import paranim/gl, paranim/gl/entities2d
 import pararules
@@ -19,6 +20,8 @@ const playerWalk3 = staticRead("assets/player_walk3.png")
 const gravity = 500
 const deceleration = 0.7
 const damping = 0.1
+const maxVelocity = 1000f
+const maxJumpVelocity = float(maxVelocity * 16)
 
 type
   Id = enum
@@ -28,6 +31,7 @@ type
     PressedKeys, MouseClick, MousePosition,
     X, Y, Width, Height,
     XVelocity, YVelocity, XChange, YChange,
+    CanJump,
   IntSet = HashSet[int]
   XYTuple = tuple[x: float, y: float]
 
@@ -46,6 +50,7 @@ schema Fact(Id, Attr):
   YVelocity: float
   XChange: float
   YChange: float
+  CanJump: bool
 
 proc decelerate(velocity: float): float =
   let v = velocity * deceleration
@@ -69,6 +74,27 @@ let rules =
         (Player, Y, y)
         (Player, Width, width)
         (Player, Height, height)
+    rule allowJump(Fact):
+      what:
+        (Global, WindowHeight, windowHeight)
+        (Player, Height, height)
+        (Player, Y, y)
+        (Player, CanJump, canJump, then = false)
+      cond:
+        y > float(windowHeight) - height
+        not canJump
+      then:
+        session.insert(Player, CanJump, true)
+    rule doJump(Fact):
+      what:
+        (Global, PressedKeys, keys)
+        (Player, CanJump, canJump, then = false)
+      cond:
+        keys.contains(int(GLFWKey.Up))
+        canJump
+      then:
+        session.insert(Player, CanJump, false)
+        session.insert(Player, YVelocity, -1 * maxJumpVelocity)
     rule movePlayer(Fact):
       what:
         (Global, DeltaTime, dt)
@@ -155,6 +181,7 @@ proc init*(game: var Game) =
   session.insert(Player, XVelocity, 0f)
   session.insert(Player, YVelocity, 0f)
   session.insert(Global, PressedKeys, initHashSet[int]())
+  session.insert(Player, CanJump, false)
 
 proc tick*(game: Game) =
   let (windowWidth, windowHeight) = session.get(rules.getWindow, session.find(rules.getWindow))
