@@ -40,7 +40,7 @@ when isMainModule:
   discard w.setKeyCallback(keyProc)
   discard w.setMouseButtonCallback(mouseButtonProc)
   discard w.setCursorPosCallback(mousePositionProc)
-  discard w.setWindowSizeCallback(resizeProc)
+  discard w.setFramebufferSizeCallback(resizeProc)
   var width, height: int32
   w.getFramebufferSize(width.addr, height.addr)
   w.resizeProc(width, height)
