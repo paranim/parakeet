@@ -1,7 +1,7 @@
 import nimgl/opengl
 from nimgl/glfw import GLFWKey
 import stb_image/read as stbi
-import paranim/gl, paranim/gl/entities2d
+import paranim/gl, paranim/gl/entities
 import pararules
 import sets
 from math import `mod`
