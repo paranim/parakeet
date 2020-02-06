@@ -189,23 +189,23 @@ let session = initSession(Fact)
 for r in rules.fields:
   session.add(r)
 
-proc keyDown*(key: int) =
+proc keyPressed*(key: int) =
   var (keys) = session.query(rules.getKeys)
   keys.incl(key)
   session.insert(Global, PressedKeys, keys)
 
-proc keyUp*(key: int) =
+proc keyReleased*(key: int) =
   var (keys) = session.query(rules.getKeys)
   keys.excl(key)
   session.insert(Global, PressedKeys, keys)
 
-proc mouseButton*(button: int) =
+proc mouseClicked*(button: int) =
   session.insert(Global, MouseClick, button)
 
-proc mousePosition*(xpos: float, ypos: float) =
+proc mouseMoved*(xpos: float, ypos: float) =
   session.insert(Global, MousePosition, (xpos, ypos))
 
-proc resizeWindow*(width: int, height: int) =
+proc windowResized*(width: int, height: int) =
   session.insert(Global, WindowWidth, width)
   session.insert(Global, WindowHeight, height)
 
@@ -214,8 +214,6 @@ proc init*(game: var Game) =
   assert glInit()
   glEnable(GL_BLEND)
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
-  glDisable(GL_CULL_FACE)
-  glDisable(GL_DEPTH_TEST)
 
   # load images
   var

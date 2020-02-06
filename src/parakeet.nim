@@ -1,25 +1,25 @@
 import nimgl/glfw
 import core
 
-proc keyProc(window: GLFWWindow, key: int32, scancode: int32,
-             action: int32, mods: int32): void {.cdecl.} =
-  if action == GLFWPress:
-    if key == GLFWKey.ESCAPE:
+proc keyCallback(window: GLFWWindow, key: int32, scancode: int32,
+                 action: int32, mods: int32): void {.cdecl.} =
+  if action == GLFW_PRESS:
+    if key == GLFWKey.Escape:
       window.setWindowShouldClose(true)
     else:
-      keyDown(key)
+      keyPressed(key)
   elif action == GLFW_RELEASE:
-    keyUp(key)
+    keyReleased(key)
 
-proc mouseButtonProc(window: GLFWWindow, button: int32, action: int32, mods: int32): void {.cdecl.} =
+proc mouseButtonCallback(window: GLFWWindow, button: int32, action: int32, mods: int32): void {.cdecl.} =
   if action == GLFWPress:
-    mouseButton(button)
+    mouseClicked(button)
 
-proc mousePositionProc(window: GLFWWindow, xpos: float64, ypos: float64): void {.cdecl.} =
-  mousePosition(xpos, ypos)
+proc cursorPosCallback(window: GLFWWindow, xpos: float64, ypos: float64): void {.cdecl.} =
+  mouseMoved(xpos, ypos)
 
-proc resizeProc(window: GLFWWindow, width: int32, height: int32): void {.cdecl.} =
-  resizeWindow(width, height)
+proc frameSizeCallback(window: GLFWWindow, width: int32, height: int32): void {.cdecl.} =
+  windowResized(width, height)
 
 when isMainModule:
   assert glfwInit()
@@ -37,13 +37,13 @@ when isMainModule:
   w.makeContextCurrent()
   glfwSwapInterval(1)
 
-  discard w.setKeyCallback(keyProc)
-  discard w.setMouseButtonCallback(mouseButtonProc)
-  discard w.setCursorPosCallback(mousePositionProc)
-  discard w.setFramebufferSizeCallback(resizeProc)
+  discard w.setKeyCallback(keyCallback)
+  discard w.setMouseButtonCallback(mouseButtonCallback)
+  discard w.setCursorPosCallback(cursorPosCallback)
+  discard w.setFramebufferSizeCallback(frameSizeCallback)
   var width, height: int32
   w.getFramebufferSize(width.addr, height.addr)
-  w.resizeProc(width, height)
+  w.frameSizeCallback(width, height)
 
   var game = Game()
   game.init()
