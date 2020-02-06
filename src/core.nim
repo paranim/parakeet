@@ -184,7 +184,7 @@ let rules =
         session.insert(Player, Y, min(oldY, bottomEdge))
         session.insert(Player, YVelocity, 0f)
 
-let session = initSession(Fact)
+var session = initSession(Fact)
 
 for r in rules.fields:
   session.add(r)
