@@ -235,6 +235,9 @@ proc init*(game: var Game) =
   session.insert(Player, Direction, Right)
 
 proc tick*(game: Game) =
+  session.insert(Global, DeltaTime, game.deltaTime)
+  session.insert(Global, TotalTime, game.totalTime)
+
   let (windowWidth, windowHeight) = session.query(rules.getWindow)
   let player = session.query(rules.getPlayer)
 
@@ -258,7 +261,4 @@ proc tick*(game: Game) =
   image.translate(x, player.y)
   image.scale(width, player.height)
   render(game, image)
-
-  session.insert(Global, DeltaTime, game.deltaTime)
-  session.insert(Global, TotalTime, game.totalTime)
 
