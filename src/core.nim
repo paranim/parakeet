@@ -12,17 +12,18 @@ type
     totalTime*: float
     imageEntities: array[3, ImageEntity]
 
-const images = [
-  staticRead("assets/player_walk1.png"),
-  staticRead("assets/player_walk2.png"),
-  staticRead("assets/player_walk3.png")
-]
-const gravity = 500
-const deceleration = 0.7
-const damping = 0.1
-const maxVelocity = 1000f
-const maxJumpVelocity = float(maxVelocity * 8)
-const animationSecs = 0.2
+const
+  images = [
+    staticRead("assets/player_walk1.png"),
+    staticRead("assets/player_walk2.png"),
+    staticRead("assets/player_walk3.png")
+  ]
+  gravity = 500
+  deceleration = 0.7
+  damping = 0.1
+  maxVelocity = 1000f
+  maxJumpVelocity = float(maxVelocity * 8)
+  animationSecs = 0.2
 
 type
   Id = enum
