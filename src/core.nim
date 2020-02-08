@@ -60,10 +60,7 @@ schema Fact(Id, Attr):
 
 proc decelerate(velocity: float): float =
   let v = velocity * deceleration
-  if abs(v) < damping:
-    0f
-  else:
-    v
+  if abs(v) < damping: 0f else: v
 
 let rules =
   ruleset:
@@ -211,7 +208,7 @@ proc windowResized*(width: int, height: int) =
 
 proc init*(game: var Game) =
   # opengl
-  assert glInit()
+  doAssert glInit()
   glEnable(GL_BLEND)
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
@@ -238,16 +235,27 @@ proc init*(game: var Game) =
 
 proc tick*(game: Game) =
   let (windowWidth, windowHeight) = session.query(rules.getWindow)
-  let (x, y, width, height, imageIndex, direction) = session.query(rules.getPlayer)
+  let player = session.query(rules.getPlayer)
 
   glClearColor(173/255, 216/255, 230/255, 1f)
   glClear(GL_COLOR_BUFFER_BIT)
   glViewport(0, 0, int32(windowWidth), int32(windowHeight))
 
-  var image = game.imageEntities[imageIndex]
+  let x =
+    if player.direction == Right:
+      player.x
+    else:
+      player.x + player.width
+  let width =
+    if player.direction == Right:
+      player.width
+    else:
+      player.width * -1
+
+  var image = game.imageEntities[player.imageIndex]
   image.project(float(windowWidth), float(windowHeight))
-  image.translate(if direction == Right: x else: x + width, y)
-  image.scale(if direction == Right: width else: width * -1, height)
+  image.translate(x, player.y)
+  image.scale(width, player.height)
   render(game, image)
 
   session.insert(Global, DeltaTime, game.deltaTime)

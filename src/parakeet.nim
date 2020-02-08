@@ -22,7 +22,7 @@ proc frameSizeCallback(window: GLFWWindow, width: int32, height: int32): void {.
   windowResized(width, height)
 
 when isMainModule:
-  assert glfwInit()
+  doAssert glfwInit()
 
   glfwWindowHint(GLFWContextVersionMajor, 4)
   glfwWindowHint(GLFWContextVersionMinor, 1)
