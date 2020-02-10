@@ -18,11 +18,11 @@ const
     staticRead("assets/player_walk2.png"),
     staticRead("assets/player_walk3.png")
   ]
-  gravity = 500
-  deceleration = 0.7
-  damping = 0.1
+  gravity = 250
+  deceleration = 0.9
+  damping = 0.5
   maxVelocity = 1000f
-  maxJumpVelocity = float(maxVelocity * 8)
+  maxJumpVelocity = float(maxVelocity * 4)
   animationSecs = 0.2
 
 type
