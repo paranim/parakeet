@@ -30,14 +30,13 @@ type
     Global, Player
   Attr = enum
     DeltaTime, TotalTime, WindowWidth, WindowHeight,
-    PressedKeys, MouseClick, MousePosition,
+    PressedKeys, MouseClick, MouseX, MouseY,
     X, Y, Width, Height,
     XVelocity, YVelocity, XChange, YChange,
     CanJump, ImageIndex, Direction,
   DirectionName = enum
     Left, Right
   IntSet = HashSet[int]
-  XYTuple = tuple[x: float, y: float]
 
 schema Fact(Id, Attr):
   DeltaTime: float
@@ -46,7 +45,8 @@ schema Fact(Id, Attr):
   WindowHeight: int
   PressedKeys: IntSet
   MouseClick: int
-  MousePosition: XYTuple
+  MouseX: float
+  MouseY: float
   X: float
   Y: float
   Width: float
@@ -200,7 +200,8 @@ proc mouseClicked*(button: int) =
   session.insert(Global, MouseClick, button)
 
 proc mouseMoved*(xpos: float, ypos: float) =
-  session.insert(Global, MousePosition, (xpos, ypos))
+  session.insert(Global, MouseX, xpos)
+  session.insert(Global, MouseY, ypos)
 
 proc windowResized*(width: int, height: int) =
   if width == 0 or height == 0:
