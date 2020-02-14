@@ -11,21 +11,6 @@ type
     deltaTime*: float
     totalTime*: float
     imageEntities: array[3, ImageEntity]
-
-const
-  images = [
-    staticRead("assets/player_walk1.png"),
-    staticRead("assets/player_walk2.png"),
-    staticRead("assets/player_walk3.png")
-  ]
-  gravity = 250
-  deceleration = 0.9
-  damping = 0.5
-  maxVelocity = 1000f
-  maxJumpVelocity = float(maxVelocity * 4)
-  animationSecs = 0.2
-
-type
   Id = enum
     Global, Player
   Attr = enum
@@ -58,6 +43,19 @@ schema Fact(Id, Attr):
   CanJump: bool
   ImageIndex: int
   Direction: DirectionName
+
+const
+  images = [
+    staticRead("assets/player_walk1.png"),
+    staticRead("assets/player_walk2.png"),
+    staticRead("assets/player_walk3.png")
+  ]
+  gravity = 250
+  deceleration = 0.9
+  damping = 0.5
+  maxVelocity = 1000f
+  maxJumpVelocity = float(maxVelocity * 4)
+  animationSecs = 0.2
 
 proc decelerate(velocity: float): float =
   let v = velocity * deceleration
