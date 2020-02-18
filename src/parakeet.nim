@@ -48,6 +48,8 @@ when isMainModule:
   var game = Game()
   game.init()
 
+  game.totalTime = glfwGetTime()
+
   while not w.windowShouldClose:
     let ts = glfwGetTime()
     game.deltaTime = ts - game.totalTime
