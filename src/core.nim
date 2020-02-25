@@ -184,24 +184,24 @@ var session = initSession(Fact)
 for r in rules.fields:
   session.add(r)
 
-proc keyPressed*(key: int) =
+proc onKeyPress*(key: int) =
   var (keys) = session.query(rules.getKeys)
   keys.incl(key)
   session.insert(Global, PressedKeys, keys)
 
-proc keyReleased*(key: int) =
+proc onKeyRelease*(key: int) =
   var (keys) = session.query(rules.getKeys)
   keys.excl(key)
   session.insert(Global, PressedKeys, keys)
 
-proc mouseClicked*(button: int) =
+proc onMouseClick*(button: int) =
   session.insert(Global, MouseClick, button)
 
-proc mouseMoved*(xpos: float, ypos: float) =
+proc onMouseMove*(xpos: float, ypos: float) =
   session.insert(Global, MouseX, xpos)
   session.insert(Global, MouseY, ypos)
 
-proc windowResized*(width: int, height: int) =
+proc onWindowResize*(width: int, height: int) =
   if width == 0 or height == 0:
     return
   session.insert(Global, WindowWidth, width)

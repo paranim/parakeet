@@ -1,25 +1,24 @@
 import nimgl/glfw
 import core
 
-proc keyCallback(window: GLFWWindow, key: int32, scancode: int32,
-                 action: int32, mods: int32): void {.cdecl.} =
+proc keyCallback(window: GLFWWindow, key: int32, scancode: int32, action: int32, mods: int32) {.cdecl.} =
   if action == GLFW_PRESS:
     if key == GLFWKey.Escape:
       window.setWindowShouldClose(true)
     else:
-      keyPressed(key)
+      onKeyPress(key)
   elif action == GLFW_RELEASE:
-    keyReleased(key)
+    onKeyRelease(key)
 
-proc mouseButtonCallback(window: GLFWWindow, button: int32, action: int32, mods: int32): void {.cdecl.} =
+proc mouseButtonCallback(window: GLFWWindow, button: int32, action: int32, mods: int32) {.cdecl.} =
   if action == GLFWPress:
-    mouseClicked(button)
+    onMouseClick(button)
 
-proc cursorPosCallback(window: GLFWWindow, xpos: float64, ypos: float64): void {.cdecl.} =
-  mouseMoved(xpos, ypos)
+proc cursorPosCallback(window: GLFWWindow, xpos: float64, ypos: float64) {.cdecl.} =
+  onMouseMove(xpos, ypos)
 
-proc frameSizeCallback(window: GLFWWindow, width: int32, height: int32): void {.cdecl.} =
-  windowResized(width, height)
+proc frameSizeCallback(window: GLFWWindow, width: int32, height: int32) {.cdecl.} =
+  onWindowResize(width, height)
 
 when isMainModule:
   doAssert glfwInit()
