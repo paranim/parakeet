@@ -3,7 +3,7 @@ This is a barebones [paranim](https://github.com/paranim/paranim) project. It's 
 To develop, [install Nim](https://nim-lang.org/install.html) and do:
 
 ```
-nimble run parakeet
+nimble dev
 ```
 
 Or to make a release build:

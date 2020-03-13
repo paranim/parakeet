@@ -1,10 +1,14 @@
 # Package
 
 version       = "0.1.0"
+author        = "FIXME"
+description   = "FIXME"
+license       = "FIXME"
 srcDir        = "src"
 bin           = @["parakeet"]
 
-
+task dev, "Run dev version":
+  exec "nimble run parakeet"
 
 # Dependencies
 
