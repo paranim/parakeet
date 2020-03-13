@@ -72,10 +72,9 @@ when isMainModule:
   w.frameSizeCallback(width, height)
 
   var game = Game()
-  game.init()
-
   when not defined(release):
     paravim.init(game, w)
+  game.init()
 
   game.totalTime = glfwGetTime()
 
