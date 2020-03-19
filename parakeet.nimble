@@ -18,4 +18,4 @@ requires "pararules >= 0.2.0"
 requires "stb_image >= 2.5"
 
 when not defined(release):
-  requires "paravim >= 0.5.0"
+  requires "paravim >= 0.6.0"
