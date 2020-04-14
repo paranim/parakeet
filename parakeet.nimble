@@ -17,5 +17,6 @@ requires "paranim >= 0.4.0"
 requires "pararules >= 0.2.0"
 requires "stb_image >= 2.5"
 
-when not defined(release):
-  requires "paravim >= 0.8.0"
+# Dev Dependencies
+
+requires "paravim >= 0.9.0"
