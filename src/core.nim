@@ -10,7 +10,6 @@ type
   Game* = object of RootGame
     deltaTime*: float
     totalTime*: float
-    imageEntities: array[3, ImageEntity]
   Id = enum
     Global, Player
   Attr = enum
@@ -56,6 +55,9 @@ const
   maxVelocity = 1000f
   maxJumpVelocity = float(maxVelocity * 4)
   animationSecs = 0.2
+
+var
+  imageEntities: array[3, ImageEntity]
 
 proc decelerate(velocity: float): float =
   let v = velocity * deceleration
@@ -220,7 +222,7 @@ proc init*(game: var Game) =
   for i in 0 ..< images.len:
     data = stbi.loadFromMemory(cast[seq[uint8]](images[i]), width, height, channels, stbi.RGBA)
     let uncompiledImage = initImageEntity(data, width, height)
-    game.imageEntities[i] = compile(game, uncompiledImage)
+    imageEntities[i] = compile(game, uncompiledImage)
 
   # set initial values
   session.insert(Global, PressedKeys, initHashSet[int]())
@@ -256,7 +258,7 @@ proc tick*(game: Game) =
     else:
       player.width * -1
 
-  var image = game.imageEntities[player.imageIndex]
+  var image = imageEntities[player.imageIndex]
   image.project(float(windowWidth), float(windowHeight))
   image.translate(x, player.y)
   image.scale(width, player.height)
