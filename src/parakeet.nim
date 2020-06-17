@@ -47,7 +47,8 @@ proc frameSizeCallback(window: GLFWWindow, width: int32, height: int32) {.cdecl.
 
 proc scrollCallback(window: GLFWWindow, xoffset: float64, yoffset: float64) {.cdecl.} =
   when defined(paravim):
-    paravim.scrollCallback(window, xoffset, yoffset)
+    if not focusOnGame:
+      paravim.scrollCallback(window, xoffset, yoffset)
 
 when isMainModule:
   doAssert glfwInit()
