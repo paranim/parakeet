@@ -19,4 +19,4 @@ requires "stb_image >= 2.5"
 
 # Dev Dependencies
 
-requires "paravim >= 0.13.0"
+requires "paravim >= 0.14.0"
