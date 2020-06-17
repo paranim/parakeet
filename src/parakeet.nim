@@ -45,6 +45,10 @@ proc frameSizeCallback(window: GLFWWindow, width: int32, height: int32) {.cdecl.
     paravim.frameSizeCallback(window, width, height)
   onWindowResize(width, height)
 
+proc scrollCallback(window: GLFWWindow, xoffset: float64, yoffset: float64) {.cdecl.} =
+  when defined(paravim):
+    paravim.scrollCallback(window, xoffset, yoffset)
+
 when isMainModule:
   doAssert glfwInit()
 
@@ -66,6 +70,7 @@ when isMainModule:
   discard w.setMouseButtonCallback(mouseButtonCallback)
   discard w.setCursorPosCallback(cursorPosCallback)
   discard w.setFramebufferSizeCallback(frameSizeCallback)
+  discard w.setScrollCallback(scrollCallback)
 
   var width, height: int32
   w.getFramebufferSize(width.addr, height.addr)
@@ -85,7 +90,7 @@ when isMainModule:
     game.tick()
     when defined(paravim):
       if not focusOnGame:
-        paravim.tick(game)
+        discard paravim.tick(game)
     w.swapBuffers()
     glfwPollEvents()
 
