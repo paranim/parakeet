@@ -13,10 +13,10 @@ task dev, "Run dev version":
 # Dependencies
 
 requires "nim >= 1.0.4"
-requires "paranim >= 0.6.0"
+requires "paranim >= 0.7.0"
 requires "pararules >= 0.2.0"
 requires "stb_image >= 2.5"
 
 # Dev Dependencies
 
-requires "paravim >= 0.14.0"
+requires "paravim >= 0.15.0"
