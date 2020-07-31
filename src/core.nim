@@ -63,8 +63,8 @@ proc decelerate(velocity: float): float =
   let v = velocity * deceleration
   if abs(v) < damping: 0f else: v
 
-let rules =
-  ruleset:
+var (session, rules) =
+  initSessionWithRules(Fact):
     # getters
     rule getWindow(Fact):
       what:
@@ -180,11 +180,6 @@ let rules =
         let bottomEdge = float(windowHeight) - height
         session.insert(Player, Y, min(oldY, bottomEdge))
         session.insert(Player, YVelocity, 0f)
-
-var session = initSession(Fact)
-
-for r in rules.fields:
-  session.add(r)
 
 proc onKeyPress*(key: int) =
   var (keys) = session.query(rules.getKeys)
