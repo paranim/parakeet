@@ -3,6 +3,12 @@ This is a barebones [paranim](https://github.com/paranim/paranim) project. It's 
 To develop, [install Nim](https://nim-lang.org/install.html) and do:
 
 ```
+nimble run parakeet
+```
+
+To develop with [paravim](https://github.com/paranim/paravim) (toggled by pressing `Esc`):
+
+```
 nimble dev
 ```
 
@@ -11,5 +17,3 @@ Or to make a release build:
 ```
 nimble build -d:release
 ```
-
-This project is preconfigured to show [paravim](https://github.com/paranim/paravim) in dev mode by pressing `Esc`.

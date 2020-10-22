@@ -8,11 +8,7 @@ srcDir        = "src"
 bin           = @["parakeet"]
 
 task dev, "Run dev version":
-  let ret = gorgeEx "nimble -d:paravim run parakeet"
-  if ret.exitCode != 0:
-    # in case the error was caused by paravim,
-    # try re-running with it disabled
-    exec "nimble run parakeet"
+  exec "nimble -d:paravim run parakeet"
 
 # Dependencies
 
