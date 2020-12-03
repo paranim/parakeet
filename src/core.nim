@@ -113,18 +113,18 @@ var (session, rules) =
         (Player, XVelocity, xv, then = false)
         (Player, YVelocity, yv, then = false)
       then:
-        xv =
+        var xvNew =
           if keys.contains(int(GLFWKey.Left)):
             -1 * maxVelocity
           elif keys.contains(int(GLFWKey.Right)):
             maxVelocity
           else:
             xv
-        yv = yv + gravity
-        let xChange = xv * dt
-        let yChange = yv * dt
-        session.insert(Player, XVelocity, decelerate(xv))
-        session.insert(Player, YVelocity, decelerate(yv))
+        var yvNew = yv + gravity
+        let xChange = xvNew * dt
+        let yChange = yvNew * dt
+        session.insert(Player, XVelocity, decelerate(xvNew))
+        session.insert(Player, YVelocity, decelerate(yvNew))
         session.insert(Player, XChange, xChange)
         session.insert(Player, YChange, yChange)
         session.insert(Player, X, x + xChange)
