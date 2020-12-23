@@ -90,17 +90,6 @@ var (session, rules) =
         (Player, ImageIndex, imageIndex)
         (Player, Direction, direction)
     # enable and perform jumping
-    rule allowJump(Fact):
-      what:
-        (Global, WorldHeight, worldHeight)
-        (Player, Height, height)
-        (Player, Y, y)
-        (Player, CanJump, canJump, then = false)
-      cond:
-        y > float(worldHeight) - height
-        not canJump
-      then:
-        session.insert(Player, CanJump, true)
     rule doJump(Fact):
       what:
         (Global, PressedKeys, keys)
@@ -188,6 +177,7 @@ var (session, rules) =
         let bottomEdge = float(worldHeight) - height
         session.insert(Player, Y, min(oldY, bottomEdge))
         session.insert(Player, YVelocity, 0f)
+        session.insert(Player, CanJump, true)
 
 proc onKeyPress*(key: int) =
   var (keys) = session.query(rules.getKeys)
