@@ -13,7 +13,9 @@ type
   Id = enum
     Global, Player
   Attr = enum
-    DeltaTime, TotalTime, WindowWidth, WindowHeight,
+    DeltaTime, TotalTime,
+    WindowWidth, WindowHeight,
+    WorldWidth, WorldHeight,
     PressedKeys, MouseClick, MouseX, MouseY,
     X, Y, Width, Height,
     XVelocity, YVelocity, XChange, YChange,
@@ -27,6 +29,8 @@ schema Fact(Id, Attr):
   TotalTime: float
   WindowWidth: int
   WindowHeight: int
+  WorldWidth: int
+  WorldHeight: int
   PressedKeys: IntSet
   MouseClick: int
   MouseX: float
@@ -70,6 +74,10 @@ var (session, rules) =
       what:
         (Global, WindowWidth, windowWidth)
         (Global, WindowHeight, windowHeight)
+    rule getWorld(Fact):
+      what:
+        (Global, WorldWidth, worldWidth)
+        (Global, WorldHeight, worldHeight)
     rule getKeys(Fact):
       what:
         (Global, PressedKeys, keys)
@@ -84,12 +92,12 @@ var (session, rules) =
     # enable and perform jumping
     rule allowJump(Fact):
       what:
-        (Global, WindowHeight, windowHeight)
+        (Global, WorldHeight, worldHeight)
         (Player, Height, height)
         (Player, Y, y)
         (Player, CanJump, canJump, then = false)
       cond:
-        y > float(windowHeight) - height
+        y > float(worldHeight) - height
         not canJump
       then:
         session.insert(Player, CanJump, true)
@@ -156,28 +164,28 @@ var (session, rules) =
         session.insert(Player, XVelocity, 0f)
     rule preventMoveRight(Fact):
       what:
-        (Global, WindowWidth, windowWidth)
+        (Global, WorldWidth, worldWidth)
         (Player, X, x)
         (Player, Width, width)
         (Player, XChange, xChange)
       cond:
-        x > float(windowWidth) - width
+        x > float(worldWidth) - width
       then:
         let oldX = x - xChange
-        let rightEdge = float(windowWidth) - width
+        let rightEdge = float(worldWidth) - width
         session.insert(Player, X, min(oldX, rightEdge))
         session.insert(Player, XVelocity, 0f)
     rule preventMoveDown(Fact):
       what:
-        (Global, WindowHeight, windowHeight)
+        (Global, WorldHeight, worldHeight)
         (Player, Y, y)
         (Player, Height, height)
         (Player, YChange, yChange)
       cond:
-        y > float(windowHeight) - height
+        y > float(worldHeight) - height
       then:
         let oldY = y - yChange
-        let bottomEdge = float(windowHeight) - height
+        let bottomEdge = float(worldHeight) - height
         session.insert(Player, Y, min(oldY, bottomEdge))
         session.insert(Player, YVelocity, 0f)
 
@@ -198,11 +206,13 @@ proc onMouseMove*(xpos: float, ypos: float) =
   session.insert(Global, MouseX, xpos)
   session.insert(Global, MouseY, ypos)
 
-proc onWindowResize*(width: int, height: int) =
-  if width == 0 or height == 0:
+proc onWindowResize*(windowWidth: int, windowHeight: int, worldWidth: int, worldHeight: int) =
+  if windowWidth == 0 or windowHeight == 0:
     return
-  session.insert(Global, WindowWidth, width)
-  session.insert(Global, WindowHeight, height)
+  session.insert(Global, WindowWidth, windowWidth)
+  session.insert(Global, WindowHeight, windowHeight)
+  session.insert(Global, WorldWidth, worldWidth)
+  session.insert(Global, WorldHeight, worldHeight)
 
 proc init*(game: var Game) =
   # opengl
@@ -236,6 +246,7 @@ proc tick*(game: Game) =
   session.insert(Global, TotalTime, game.totalTime)
 
   let (windowWidth, windowHeight) = session.query(rules.getWindow)
+  let (worldWidth, worldHeight) = session.query(rules.getWorld)
   let player = session.query(rules.getPlayer)
 
   glClearColor(173/255, 216/255, 230/255, 1f)
@@ -254,7 +265,7 @@ proc tick*(game: Game) =
       player.width * -1
 
   var image = imageEntities[player.imageIndex]
-  image.project(float(windowWidth), float(windowHeight))
+  image.project(float(worldWidth), float(worldHeight))
   image.translate(x, player.y)
   image.scale(width, player.height)
   render(game, image)
