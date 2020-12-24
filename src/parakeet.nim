@@ -33,14 +33,14 @@ proc mouseButtonCallback(window: GLFWWindow, button: int32, action: int32, mods:
   if action == GLFWPress:
     onMouseClick(button)
 
-var density: int
-
 proc cursorPosCallback(window: GLFWWindow, xpos: float64, ypos: float64) {.cdecl.} =
   when defined(paravim):
     if not focusOnGame:
       paravim.cursorPosCallback(window, xpos, ypos)
       return
-  onMouseMove(xpos * density.float, ypos * density.float)
+  onMouseMove(xpos, ypos)
+
+var density: int
 
 proc frameSizeCallback(window: GLFWWindow, width: int32, height: int32) {.cdecl.} =
   when defined(paravim):
