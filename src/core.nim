@@ -1,5 +1,6 @@
-import nimgl/opengl
-from nimgl/glfw import GLFWKey
+import opengl #nimgl/opengl
+#from nimgl/glfw import GLFWKey
+import staticglfw
 import stb_image/read as stbi
 import paranim/gl, paranim/gl/entities
 import pararules
@@ -95,7 +96,7 @@ var (session, rules) =
         (Global, PressedKeys, keys)
         (Player, CanJump, canJump, then = false)
       cond:
-        keys.contains(int(GLFWKey.Up))
+        keys.contains(int(KEY_UP))
         canJump
       then:
         session.insert(Player, CanJump, false)
@@ -111,9 +112,9 @@ var (session, rules) =
         (Player, YVelocity, yv, then = false)
       then:
         var xvNew =
-          if keys.contains(int(GLFWKey.Left)):
+          if keys.contains(int(KEY_LEFT)):
             -1 * maxVelocity
-          elif keys.contains(int(GLFWKey.Right)):
+          elif keys.contains(int(KEY_RIGHT)):
             maxVelocity
           else:
             xv
@@ -206,7 +207,8 @@ proc onWindowResize*(windowWidth: int, windowHeight: int, worldWidth: int, world
 
 proc init*(game: var Game) =
   # opengl
-  doAssert glInit()
+  when not defined(emscripten):
+    loadExtensions()
   glEnable(GL_BLEND)
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
@@ -232,8 +234,8 @@ proc init*(game: var Game) =
   session.insert(Player, Direction, Right)
 
 proc tick*(game: Game) =
-  session.insert(Global, DeltaTime, game.deltaTime)
-  session.insert(Global, TotalTime, game.totalTime)
+  #session.insert(Global, DeltaTime, game.deltaTime)
+  #session.insert(Global, TotalTime, game.totalTime)
 
   let (windowWidth, windowHeight) = session.query(rules.getWindow)
   let (worldWidth, worldHeight) = session.query(rules.getWorld)
