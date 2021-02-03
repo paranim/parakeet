@@ -234,8 +234,11 @@ proc init*(game: var Game) =
   session.insert(Player, Direction, Right)
 
 proc tick*(game: Game) =
-  #session.insert(Global, DeltaTime, game.deltaTime)
-  #session.insert(Global, TotalTime, game.totalTime)
+  try:
+    session.insert(Global, DeltaTime, game.deltaTime)
+  except Exception as e:
+    echo e.msg
+  session.insert(Global, TotalTime, game.totalTime)
 
   let (windowWidth, windowHeight) = session.query(rules.getWindow)
   let (worldWidth, worldHeight) = session.query(rules.getWorld)
