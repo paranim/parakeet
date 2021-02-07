@@ -1,6 +1,5 @@
-import opengl #nimgl/opengl
-#from nimgl/glfw import GLFWKey
-import staticglfw
+import nimgl/opengl
+from nimgl/glfw import GLFWKey
 import stb_image/read as stbi
 import paranim/gl, paranim/gl/entities
 import pararules
@@ -96,7 +95,7 @@ var (session, rules) =
         (Global, PressedKeys, keys)
         (Player, CanJump, canJump, then = false)
       cond:
-        keys[].contains(int(KEY_UP))
+        keys[].contains(int(GLFWKey.Up))
         canJump
       then:
         session.insert(Player, CanJump, false)
@@ -112,9 +111,9 @@ var (session, rules) =
         (Player, YVelocity, yv, then = false)
       then:
         var xvNew =
-          if keys[].contains(int(KEY_LEFT)):
+          if keys[].contains(int(GLFWKey.Left)):
             -1 * maxVelocity
-          elif keys[].contains(int(KEY_RIGHT)):
+          elif keys[].contains(int(GLFWKey.Right)):
             maxVelocity
           else:
             xv
@@ -208,7 +207,7 @@ proc onWindowResize*(windowWidth: int, windowHeight: int, worldWidth: int, world
 proc init*(game: var Game) =
   # opengl
   when not defined(emscripten):
-    loadExtensions()
+    doAssert glInit()
   glEnable(GL_BLEND)
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
