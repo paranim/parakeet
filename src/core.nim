@@ -23,7 +23,7 @@ type
     CanJump, ImageIndex, Direction,
   DirectionName = enum
     Left, Right
-  IntSet = HashSet[int]
+  IntSet = ref HashSet[int]
 
 schema Fact(Id, Attr):
   DeltaTime: float
@@ -96,7 +96,7 @@ var (session, rules) =
         (Global, PressedKeys, keys)
         (Player, CanJump, canJump, then = false)
       cond:
-        keys.contains(int(KEY_UP))
+        keys[].contains(int(KEY_UP))
         canJump
       then:
         session.insert(Player, CanJump, false)
@@ -112,9 +112,9 @@ var (session, rules) =
         (Player, YVelocity, yv, then = false)
       then:
         var xvNew =
-          if keys.contains(int(KEY_LEFT)):
+          if keys[].contains(int(KEY_LEFT)):
             -1 * maxVelocity
-          elif keys.contains(int(KEY_RIGHT)):
+          elif keys[].contains(int(KEY_RIGHT)):
             maxVelocity
           else:
             xv
@@ -182,12 +182,12 @@ var (session, rules) =
 
 proc onKeyPress*(key: int) =
   var (keys) = session.query(rules.getKeys)
-  keys.incl(key)
+  keys[].incl(key)
   session.insert(Global, PressedKeys, keys)
 
 proc onKeyRelease*(key: int) =
   var (keys) = session.query(rules.getKeys)
-  keys.excl(key)
+  keys[].excl(key)
   session.insert(Global, PressedKeys, keys)
 
 proc onMouseClick*(button: int) =
@@ -222,7 +222,10 @@ proc init*(game: var Game) =
     imageEntities[i] = compile(game, uncompiledImage)
 
   # set initial values
-  session.insert(Global, PressedKeys, initHashSet[int]())
+  var hs: ref HashSet[int]
+  new hs
+  hs[] = initHashSet[int]()
+  session.insert(Global, PressedKeys, hs)
   session.insert(Player, X, 0f)
   session.insert(Player, Y, 0f)
   session.insert(Player, Width, float(width))
@@ -234,10 +237,7 @@ proc init*(game: var Game) =
   session.insert(Player, Direction, Right)
 
 proc tick*(game: Game) =
-  try:
-    session.insert(Global, DeltaTime, game.deltaTime)
-  except Exception as e:
-    echo e.msg
+  session.insert(Global, DeltaTime, game.deltaTime)
   session.insert(Global, TotalTime, game.totalTime)
 
   let (windowWidth, windowHeight) = session.query(rules.getWindow)
