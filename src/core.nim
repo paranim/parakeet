@@ -206,8 +206,7 @@ proc onWindowResize*(windowWidth: int, windowHeight: int, worldWidth: int, world
 
 proc init*(game: var Game) =
   # opengl
-  when not defined(emscripten):
-    doAssert glInit()
+  doAssert glInit()
   glEnable(GL_BLEND)
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 

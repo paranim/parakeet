@@ -24,4 +24,4 @@ when defined(emscripten):
   # Pass this to Emscripten linker to generate html file scaffold for us.
   switch("passL", "-o index.html -s INITIAL_MEMORY=64MB -s USE_WEBGL2=1 --shell-file shell_minimal.html")
 elif defined(release):
-  switch("app", "gui")
+  --app:gui
