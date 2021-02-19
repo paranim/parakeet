@@ -22,7 +22,7 @@ type
     CanJump, ImageIndex, Direction,
   DirectionName = enum
     Left, Right
-  IntSet = ref HashSet[int]
+  IntSet = HashSet[int]
 
 schema Fact(Id, Attr):
   DeltaTime: float
@@ -95,7 +95,7 @@ var (session, rules) =
         (Global, PressedKeys, keys)
         (Player, CanJump, canJump, then = false)
       cond:
-        keys[].contains(int(GLFWKey.Up))
+        keys.contains(int(GLFWKey.Up))
         canJump
       then:
         session.insert(Player, CanJump, false)
@@ -111,9 +111,9 @@ var (session, rules) =
         (Player, YVelocity, yv, then = false)
       then:
         var xvNew =
-          if keys[].contains(int(GLFWKey.Left)):
+          if keys.contains(int(GLFWKey.Left)):
             -1 * maxVelocity
-          elif keys[].contains(int(GLFWKey.Right)):
+          elif keys.contains(int(GLFWKey.Right)):
             maxVelocity
           else:
             xv
@@ -181,12 +181,12 @@ var (session, rules) =
 
 proc onKeyPress*(key: int) =
   var (keys) = session.query(rules.getKeys)
-  keys[].incl(key)
+  keys.incl(key)
   session.insert(Global, PressedKeys, keys)
 
 proc onKeyRelease*(key: int) =
   var (keys) = session.query(rules.getKeys)
-  keys[].excl(key)
+  keys.excl(key)
   session.insert(Global, PressedKeys, keys)
 
 proc onMouseClick*(button: int) =
@@ -220,10 +220,7 @@ proc init*(game: var Game) =
     imageEntities[i] = compile(game, uncompiledImage)
 
   # set initial values
-  var hs: ref HashSet[int]
-  new hs
-  hs[] = initHashSet[int]()
-  session.insert(Global, PressedKeys, hs)
+  session.insert(Global, PressedKeys, initHashSet[int]())
   session.insert(Player, X, 0f)
   session.insert(Player, Y, 0f)
   session.insert(Player, Width, float(width))
