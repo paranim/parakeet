@@ -57,17 +57,23 @@ when defined(emscripten):
 
 var
   game: Game
-  w: GLFWWindow
+  window: GLFWWindow
 
 proc mainLoop() {.cdecl.} =
   let ts = glfwGetTime()
   game.deltaTime = ts - game.totalTime
   game.totalTime = ts
-  game.tick()
+  when defined(emscripten):
+    try:
+      game.tick()
+    except Exception as ex:
+      echo ex.msg
+  else:
+    game.tick()
   when defined(paravim):
     if not focusOnGame:
       discard paravim.tick(game)
-  w.swapBuffers()
+  window.swapBuffers()
   glfwPollEvents()
 
 when isMainModule:
@@ -79,32 +85,32 @@ when isMainModule:
   glfwWindowHint(GLFWOpenglProfile, GLFW_OPENGL_CORE_PROFILE)
   glfwWindowHint(GLFWResizable, GLFW_TRUE)
 
-  w = glfwCreateWindow(1024, 768, "Parakeet")
-  if w == nil:
+  window = glfwCreateWindow(1024, 768, "Parakeet")
+  if window == nil:
     quit(-1)
 
-  w.makeContextCurrent()
+  window.makeContextCurrent()
   glfwSwapInterval(1)
 
-  discard w.setKeyCallback(keyCallback)
-  discard w.setCharCallback(charCallback)
-  discard w.setMouseButtonCallback(mouseButtonCallback)
-  discard w.setCursorPosCallback(cursorPosCallback)
-  discard w.setFramebufferSizeCallback(frameSizeCallback)
-  discard w.setScrollCallback(scrollCallback)
+  discard window.setKeyCallback(keyCallback)
+  discard window.setCharCallback(charCallback)
+  discard window.setMouseButtonCallback(mouseButtonCallback)
+  discard window.setCursorPosCallback(cursorPosCallback)
+  discard window.setFramebufferSizeCallback(frameSizeCallback)
+  discard window.setScrollCallback(scrollCallback)
 
   var width, height: int32
-  w.getFramebufferSize(width.addr, height.addr)
+  window.getFramebufferSize(width.addr, height.addr)
 
   var windowWidth, windowHeight: int32
-  w.getWindowSize(windowWidth.addr, windowHeight.addr)
+  window.getWindowSize(windowWidth.addr, windowHeight.addr)
 
   density = max(1, int(width / windowWidth))
-  w.frameSizeCallback(width, height)
+  window.frameSizeCallback(width, height)
 
   game = Game()
   when defined(paravim):
-    paravim.init(game, w)
+    paravim.init(game, window)
   game.init()
 
   game.totalTime = glfwGetTime()
@@ -112,8 +118,8 @@ when isMainModule:
   when defined(emscripten):
     emscripten_set_main_loop(mainLoop, 0, true)
   else:
-    while not w.windowShouldClose:
+    while not window.windowShouldClose:
       mainLoop()
 
-  w.destroyWindow()
+  window.destroyWindow()
   glfwTerminate()
