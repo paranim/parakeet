@@ -54,6 +54,7 @@ proc scrollCallback(window: GLFWWindow, xoffset: float64, yoffset: float64) {.cd
 
 when defined(emscripten):
   proc emscripten_set_main_loop(f: proc() {.cdecl.}, a: cint, b: bool) {.importc.}
+  proc emscripten_get_canvas_element_size(target: cstring, width: ptr cint, height: ptr cint): cint {.importc.}
 
 var
   game: Game
@@ -64,6 +65,9 @@ proc mainLoop() {.cdecl.} =
   game.deltaTime = ts - game.totalTime
   game.totalTime = ts
   when defined(emscripten):
+    var width, height: cint
+    if emscripten_get_canvas_element_size("#canvas", width.addr, height.addr) >= 0:
+      window.frameSizeCallback(width, height)
     try:
       game.tick()
     except Exception as ex:
