@@ -112,7 +112,6 @@ when isMainModule:
   density = max(1, int(width / windowWidth))
   window.frameSizeCallback(width, height)
 
-  game = Game()
   when defined(paravim):
     paravim.init(game, window)
   game.init()
