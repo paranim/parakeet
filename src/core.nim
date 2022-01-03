@@ -67,8 +67,8 @@ proc decelerate(velocity: float): float =
   let v = velocity * deceleration
   if abs(v) < damping: 0f else: v
 
-var (session, rules) =
-  initSessionWithRules(Fact):
+let (initSession, rules) =
+  defineSessionWithRules(Fact, FactMatch, autoFire = false):
     # getters
     rule getWindow(Fact):
       what:
@@ -179,15 +179,21 @@ var (session, rules) =
         session.insert(Player, YVelocity, 0f)
         session.insert(Player, CanJump, true)
 
+var session: Session[Fact, FactMatch] = initSession()
+for r in rules.fields:
+  session.add(r)
+
 proc onKeyPress*(key: int) =
   var (keys) = session.query(rules.getKeys)
   keys.incl(key)
   session.insert(Global, PressedKeys, keys)
+  session.fireRules
 
 proc onKeyRelease*(key: int) =
   var (keys) = session.query(rules.getKeys)
   keys.excl(key)
   session.insert(Global, PressedKeys, keys)
+  session.fireRules
 
 proc onMouseClick*(button: int) =
   session.insert(Global, MouseClick, button)
@@ -234,6 +240,7 @@ proc init*(game: var Game) =
 proc tick*(game: Game) =
   session.insert(Global, DeltaTime, game.deltaTime)
   session.insert(Global, TotalTime, game.totalTime)
+  session.fireRules
 
   let (windowWidth, windowHeight) = session.query(rules.getWindow)
   let (worldWidth, worldHeight) = session.query(rules.getWorld)
