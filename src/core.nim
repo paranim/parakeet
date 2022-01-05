@@ -68,7 +68,7 @@ proc decelerate(velocity: float): float =
   if abs(v) < damping: 0f else: v
 
 let (initSession, rules) =
-  defineSessionWithRules(Fact, FactMatch, autoFire = false):
+  staticRuleset(Fact, FactMatch):
     # getters
     rule getWindow(Fact):
       what:
@@ -179,7 +179,7 @@ let (initSession, rules) =
         session.insert(Player, YVelocity, 0f)
         session.insert(Player, CanJump, true)
 
-var session: Session[Fact, FactMatch] = initSession()
+var session: Session[Fact, FactMatch] = initSession(autoFire = false)
 for r in rules.fields:
   session.add(r)
 
