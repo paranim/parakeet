@@ -1,5 +1,5 @@
-import nimgl/opengl
-from nimgl/glfw import GLFWKey
+import paranim/opengl
+from paranim/glfw import GLFWKey
 import stb_image/read as stbi
 import paranim/gl, paranim/gl/entities
 import pararules

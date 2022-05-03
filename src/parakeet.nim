@@ -1,4 +1,4 @@
-import nimgl/glfw
+import paranim/glfw
 import core
 
 when defined(paravim):
