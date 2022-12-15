@@ -24,6 +24,7 @@ when defined(emscripten):
 
   --define:useMalloc
   --opt:size
+  --threads:off
 
   # Pass this to Emscripten linker to generate html file scaffold for us.
   switch("passL", "-o index.html -s USE_WEBGL2=1 --shell-file shell_minimal.html")
